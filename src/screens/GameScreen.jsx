@@ -46,7 +46,7 @@ export default function GameScreen({ onExit, audio }) {
   const tickTimer = useRef(null);
   const touchData = useRef({ startX: 0, startY: 0, lastX: 0, lastY: 0, moved: false, holding: false, dragInterval: null });
   const flashTimer = useRef(null);
-  const isInitialized = useRef(false);
+
 
   const [uiState, setUiState] = useState({
     score: 0, level: 1, lines: 0, linesInLevel: 0,
@@ -171,6 +171,7 @@ export default function GameScreen({ onExit, audio }) {
     if (isGameOver(clearedBoard, nextPiece)) {
       state.board = clearedBoard;
       state.piece = null;
+      state.gameOver = true;
       drawBoard();
       setUiState(u => ({ ...u, gameOver: true }));
       audio.stopMusic();
@@ -303,10 +304,7 @@ export default function GameScreen({ onExit, audio }) {
 
   // Init
   useEffect(() => {
-    if (isInitialized.current) return;
-    isInitialized.current = true;
     startGame();
-
     return () => {
       clearTimeout(tickTimer.current);
       clearTimeout(flashTimer.current);
@@ -474,8 +472,13 @@ function ScorePill({ label, value, color }) {
 }
 
 function Overlay({ children }) {
+  function block(e) { e.stopPropagation(); }
   return (
-    <div style={{ position: 'absolute', inset: 0, background: 'rgba(238,246,255,0.92)', backdropFilter: 'blur(8px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 20 }}>
+    <div
+      onTouchStart={block} onTouchMove={block} onTouchEnd={block}
+      onClick={block}
+      style={{ position: 'absolute', inset: 0, background: 'rgba(238,246,255,0.92)', backdropFilter: 'blur(8px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 20 }}
+    >
       {children}
     </div>
   );
