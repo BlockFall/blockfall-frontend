@@ -1,4 +1,5 @@
 import { useRef, useEffect, useState } from 'react';
+import { useAccount } from 'wagmi';
 import Logo from '../components/Logo';
 import AnimatedBlocks from '../components/AnimatedBlocks';
 import { COLORS } from '../game/constants';
@@ -60,9 +61,15 @@ const FLOAT_BUTTONS = [
   },
 ];
 
-export default function HomeScreen({ onPlay, audio, energy, onNavigate }) {
+function shortenAddress(addr) {
+  if (!addr) return '';
+  return addr.slice(0, 6) + '...' + addr.slice(-4);
+}
+
+export default function HomeScreen({ onPlay, onConnectWallet, isConnected, audio, energy, onNavigate }) {
   const containerRef = useRef(null);
   const [size, setSize] = useState({ width: 600, height: 700 });
+  const { address } = useAccount();
 
   useEffect(() => {
     function update() {
@@ -101,39 +108,84 @@ export default function HomeScreen({ onPlay, audio, energy, onNavigate }) {
           top: 16,
           left: 16,
           zIndex: 10,
-          background: 'white',
-          borderRadius: 14,
-          padding: '8px 14px',
-          boxShadow: '0 4px 16px rgba(2,48,71,0.10)',
-          border: `2px solid ${noEnergy ? '#ef4444' : COLORS.amber}33`,
           display: 'flex',
-          alignItems: 'center',
-          gap: 6,
+          flexDirection: 'column',
+          gap: 8,
         }}
       >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill={noEnergy ? '#ef4444' : COLORS.amber}>
-          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-        </svg>
-        <span
+        <div
           style={{
-            fontSize: 14,
-            fontWeight: 800,
-            color: noEnergy ? '#ef4444' : COLORS.deepSpace,
-            letterSpacing: 0.5,
+            background: 'white',
+            borderRadius: 14,
+            padding: '8px 14px',
+            boxShadow: '0 4px 16px rgba(2,48,71,0.10)',
+            border: `2px solid ${noEnergy ? '#ef4444' : COLORS.amber}33`,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
           }}
         >
-          {energy} / 10
-        </span>
-        <span
-          style={{
-            fontSize: 10,
-            fontWeight: 600,
-            color: noEnergy ? '#ef4444' : COLORS.deepSpace,
-            opacity: 0.5,
-          }}
-        >
-          energy
-        </span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill={noEnergy ? '#ef4444' : COLORS.amber}>
+            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+          </svg>
+          <span
+            style={{
+              fontSize: 14,
+              fontWeight: 800,
+              color: noEnergy ? '#ef4444' : COLORS.deepSpace,
+              letterSpacing: 0.5,
+            }}
+          >
+            {energy} / 10
+          </span>
+          <span
+            style={{
+              fontSize: 10,
+              fontWeight: 600,
+              color: noEnergy ? '#ef4444' : COLORS.deepSpace,
+              opacity: 0.5,
+            }}
+          >
+            energy
+          </span>
+        </div>
+
+        {/* Wallet address badge */}
+        {isConnected && address && (
+          <div
+            style={{
+              background: 'white',
+              borderRadius: 14,
+              padding: '7px 12px',
+              boxShadow: '0 4px 16px rgba(2,48,71,0.10)',
+              border: `2px solid ${COLORS.blueGreen}33`,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+            }}
+          >
+            <div
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                background: '#22c55e',
+                flexShrink: 0,
+              }}
+            />
+            <span
+              style={{
+                fontSize: 12,
+                fontWeight: 700,
+                color: COLORS.deepSpace,
+                fontFamily: 'monospace',
+                letterSpacing: 0.5,
+              }}
+            >
+              {shortenAddress(address)}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Floating buttons — top right */}
@@ -190,39 +242,71 @@ export default function HomeScreen({ onPlay, audio, energy, onNavigate }) {
           Stack, clear, survive.
         </p>
 
-        {/* Play button */}
-        <button
-          onClick={() => { audio.initAudio(); onPlay(); }}
-          disabled={noEnergy}
-          style={{
-            background: noEnergy
-              ? '#ccc'
-              : `linear-gradient(135deg, ${COLORS.orange}, ${COLORS.amber})`,
-            color: 'white',
-            border: 'none',
-            borderRadius: 24,
-            padding: '18px 64px',
-            fontSize: 22,
-            fontWeight: 900,
-            cursor: noEnergy ? 'not-allowed' : 'pointer',
-            letterSpacing: 2,
-            boxShadow: noEnergy ? 'none' : `0 8px 32px ${COLORS.orange}66`,
-            animation: noEnergy ? 'none' : 'pulseBtn 2s ease-in-out infinite',
-            position: 'relative',
-            overflow: 'hidden',
-            marginBottom: 32,
-            opacity: noEnergy ? 0.7 : 1,
-          }}
-        >
-          {noEnergy ? 'NO ENERGY' : 'PLAY'}
-          {!noEnergy && (
-            <span style={{
-              position: 'absolute', top: 0, left: '-100%', width: '60%', height: '100%',
-              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent)',
-              animation: 'shine 2.5s ease-in-out infinite',
-            }} />
-          )}
-        </button>
+        {isConnected ? (
+          /* Play button */
+          <button
+            onClick={onPlay}
+            disabled={noEnergy}
+            style={{
+              background: noEnergy
+                ? '#ccc'
+                : `linear-gradient(135deg, ${COLORS.orange}, ${COLORS.amber})`,
+              color: 'white',
+              border: 'none',
+              borderRadius: 24,
+              padding: '18px 64px',
+              fontSize: 22,
+              fontWeight: 900,
+              cursor: noEnergy ? 'not-allowed' : 'pointer',
+              letterSpacing: 2,
+              boxShadow: noEnergy ? 'none' : `0 8px 32px ${COLORS.orange}66`,
+              animation: noEnergy ? 'none' : 'pulseBtn 2s ease-in-out infinite',
+              position: 'relative',
+              overflow: 'hidden',
+              marginBottom: 32,
+              opacity: noEnergy ? 0.7 : 1,
+            }}
+          >
+            {noEnergy ? 'NO ENERGY' : 'PLAY'}
+            {!noEnergy && (
+              <span style={{
+                position: 'absolute', top: 0, left: '-100%', width: '60%', height: '100%',
+                background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent)',
+                animation: 'shine 2.5s ease-in-out infinite',
+              }} />
+            )}
+          </button>
+        ) : (
+          /* Connect Wallet button */
+          <button
+            onClick={onConnectWallet}
+            style={{
+              background: `linear-gradient(135deg, ${COLORS.blueGreen}, #0ea5e9)`,
+              color: 'white',
+              border: 'none',
+              borderRadius: 24,
+              padding: '18px 48px',
+              fontSize: 18,
+              fontWeight: 900,
+              cursor: 'pointer',
+              letterSpacing: 1,
+              boxShadow: `0 8px 32px ${COLORS.blueGreen}66`,
+              position: 'relative',
+              overflow: 'hidden',
+              marginBottom: 32,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+            }}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <rect x="2" y="6" width="20" height="14" rx="3" stroke="white" strokeWidth="2" />
+              <path d="M16 13a1 1 0 1 0 2 0 1 1 0 0 0-2 0z" fill="white" />
+              <path d="M2 10h20" stroke="white" strokeWidth="2" />
+            </svg>
+            Connect Wallet
+          </button>
+        )}
 
         {/* Stat cards */}
         <div style={{ display: 'flex', gap: 12 }}>
