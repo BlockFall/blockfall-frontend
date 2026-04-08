@@ -328,7 +328,7 @@ export default function GameScreen({ onExit, audio }) {
     touchData.current.lastX = e.touches[0].clientX;
     touchData.current.lastY = e.touches[0].clientY;
     const dy = touchData.current.lastY - touchData.current.startY;
-    if (dy > 55 && !touchData.current.moved) {
+    if (dy > 70 && !touchData.current.moved) {
       touchData.current.moved = true;
       clearInterval(touchData.current.dragInterval);
       hardDrop();
