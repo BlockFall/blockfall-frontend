@@ -1,5 +1,5 @@
 import { COLORS } from '../game/constants';
-import Logo from '../components/Logo';
+import BackButton from '../components/BackButton';
 
 const MOCK_PROFILE = {
   name: 'BlockFall Player',
@@ -18,7 +18,7 @@ const MOCK_PROFILE = {
   ],
 };
 
-export default function ProfileScreen({ audio, onToggleMute }) {
+export default function ProfileScreen({ audio, onToggleMute, onGoHome }) {
   return (
     <div
       style={{
@@ -26,7 +26,6 @@ export default function ProfileScreen({ audio, onToggleMute }) {
         display: 'flex',
         flexDirection: 'column',
         background: 'linear-gradient(160deg, #e8f4fd 0%, #f5f9ff 100%)',
-        paddingBottom: 80,
         overflowY: 'auto',
       }}
     >
@@ -35,13 +34,15 @@ export default function ProfileScreen({ audio, onToggleMute }) {
         style={{
           background: 'white',
           boxShadow: '0 2px 8px rgba(2,48,71,0.08)',
-          padding: '20px 20px 16px',
+          padding: '16px 20px',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
+          gap: 12,
         }}
       >
-        <Logo size="sm" />
+        <BackButton onGoHome={onGoHome} />
+        <span style={{ fontSize: 18, fontWeight: 800, color: COLORS.deepSpace }}>Profile</span>
+        <div style={{ flex: 1 }} />
         <button
           onClick={onToggleMute}
           title={audio.muted ? 'Unmute' : 'Mute'}

@@ -1,18 +1,35 @@
 import { useState, useCallback } from 'react';
-import Navigation from './components/Navigation';
 import HomeScreen from './screens/HomeScreen';
 import GameScreen from './screens/GameScreen';
 import LeaderboardScreen from './screens/LeaderboardScreen';
 import ProfileScreen from './screens/ProfileScreen';
+import ShopScreen from './screens/ShopScreen';
+import DailyCheckinScreen from './screens/DailyCheckinScreen';
+import HelpGuideScreen from './screens/HelpGuideScreen';
 import { useAudio } from './audio/useAudio';
+
+function getEnergy() {
+  const stored = localStorage.getItem('blockfall_energy');
+  if (stored === null) return 10;
+  return parseInt(stored, 10);
+}
+
+function saveEnergy(value) {
+  localStorage.setItem('blockfall_energy', String(value));
+}
 
 export default function App() {
   const [screen, setScreen] = useState('home');
+  const [energy, setEnergy] = useState(getEnergy);
   const audio = useAudio();
 
   const handlePlay = useCallback(() => {
+    if (energy <= 0) return;
+    const next = energy - 1;
+    setEnergy(next);
+    saveEnergy(next);
     setScreen('game');
-  }, []);
+  }, [energy]);
 
   const handleExitGame = useCallback(() => {
     setScreen('home');
@@ -22,7 +39,15 @@ export default function App() {
     audio.toggleMute();
   }, [audio]);
 
-  const isGame = screen === 'game';
+  const handleGoHome = useCallback(() => {
+    setScreen('home');
+  }, []);
+
+  const handleAddEnergy = useCallback((amount) => {
+    const next = energy + amount;
+    setEnergy(next);
+    saveEnergy(next);
+  }, [energy]);
 
   return (
     <div
@@ -48,20 +73,30 @@ export default function App() {
         }}
       >
         {screen === 'home' && (
-          <HomeScreen onPlay={handlePlay} audio={audio} />
+          <HomeScreen
+            onPlay={handlePlay}
+            audio={audio}
+            energy={energy}
+            onNavigate={setScreen}
+          />
         )}
         {screen === 'game' && (
           <GameScreen onExit={handleExitGame} audio={audio} />
         )}
         {screen === 'leaderboard' && (
-          <LeaderboardScreen />
+          <LeaderboardScreen onGoHome={handleGoHome} />
         )}
         {screen === 'profile' && (
-          <ProfileScreen audio={audio} onToggleMute={handleToggleMute} />
+          <ProfileScreen audio={audio} onToggleMute={handleToggleMute} onGoHome={handleGoHome} />
         )}
-
-        {!isGame && (
-          <Navigation screen={screen} setScreen={setScreen} />
+        {screen === 'shop' && (
+          <ShopScreen onGoHome={handleGoHome} onAddEnergy={handleAddEnergy} />
+        )}
+        {screen === 'checkin' && (
+          <DailyCheckinScreen onGoHome={handleGoHome} onAddEnergy={handleAddEnergy} />
+        )}
+        {screen === 'helpguide' && (
+          <HelpGuideScreen onGoHome={handleGoHome} />
         )}
       </div>
     </div>
