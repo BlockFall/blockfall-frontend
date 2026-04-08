@@ -1,5 +1,5 @@
 export const BOARD_WIDTH = 10;
-export const BOARD_HEIGHT = 20;
+export const BOARD_HEIGHT = 21;
 export const CELL_SIZE = 32;
 
 export const COLORS = {
@@ -81,8 +81,8 @@ export const LEVELS = [
 export const BASE_SCORE = {
   1: 100,
   2: 300,
-  3: 700,
-  4: 1500,
+  3: 500,
+  4: 800,
 };
 
 export const HARD_DROP_SCORE = 2;

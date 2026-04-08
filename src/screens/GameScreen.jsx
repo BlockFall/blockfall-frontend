@@ -8,10 +8,6 @@ import {
 } from '../game/engine';
 import { useParticles, ParticleCanvas, RowFlash } from '../effects/ParticleSystem';
 
-const CELL = 30;
-const BOARD_PX_W = BOARD_WIDTH * CELL;
-const BOARD_PX_H = BOARD_HEIGHT * CELL;
-
 function roundRect(ctx, x, y, w, h, r) {
   ctx.beginPath();
   ctx.moveTo(x + r, y);
@@ -26,28 +22,29 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-function drawCell(ctx, x, y, color, alpha = 1) {
+function drawCell(ctx, x, y, cell, color, alpha = 1) {
   ctx.save();
   ctx.globalAlpha = alpha;
   ctx.fillStyle = color;
-  roundRect(ctx, x + 1, y + 1, CELL - 2, CELL - 2, 4);
+  roundRect(ctx, x + 1, y + 1, cell - 2, cell - 2, Math.max(2, cell * 0.12));
   ctx.fill();
   ctx.fillStyle = 'rgba(255,255,255,0.25)';
-  roundRect(ctx, x + 3, y + 3, CELL - 6, 6, 2);
+  roundRect(ctx, x + 3, y + 3, cell - 6, Math.max(3, cell * 0.2), 2);
   ctx.fill();
   ctx.restore();
 }
 
 export default function GameScreen({ onExit, audio }) {
   const canvasRef = useRef(null);
+  const areaRef   = useRef(null);   // canvas container — measured for sizing
+  const cellRef   = useRef(28);     // current cell size, used by all game functions
 
-  // All game state in a single ref to avoid stale closures
-  const gs = useRef(null);
+  const gs        = useRef(null);
   const tickTimer = useRef(null);
-  const touchData = useRef({ startX: 0, startY: 0, lastX: 0, lastY: 0, moved: false, holding: false, dragInterval: null });
   const flashTimer = useRef(null);
+  const touchData = useRef({ startX: 0, startY: 0, lastX: 0, lastY: 0, moved: false, holding: false, dragInterval: null });
 
-
+  const [cell, setCell] = useState(28);   // triggers re-render for canvas size / layout
   const [uiState, setUiState] = useState({
     score: 0, level: 1, lines: 0, linesInLevel: 0,
     paused: false, gameOver: false, hardDropFlash: false,
@@ -55,123 +52,140 @@ export default function GameScreen({ onExit, audio }) {
   const [flashingRows, setFlashingRows] = useState([]);
   const { particles, spawnRowClear, spawnHardDrop } = useParticles();
 
+  // ── Sizing ────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    const el = areaRef.current;
+    if (!el) return;
+    const obs = new ResizeObserver(([entry]) => {
+      const { width, height } = entry.contentRect;
+      const fromH = Math.floor(height / BOARD_HEIGHT);
+      const fromW = Math.floor(width  / BOARD_WIDTH);
+      const next  = Math.max(16, Math.min(fromH, fromW));
+      if (next !== cellRef.current) {
+        cellRef.current = next;
+        setCell(next);
+      }
+    });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  // Redraw whenever cell size changes
+  useEffect(() => { drawBoard(); }, [cell]);
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
   function getSpeed() {
     const l = gs.current?.level ?? 0;
     return LEVELS[Math.min(l, LEVELS.length - 1)].speed;
   }
-
   function getMultiplier() {
     const l = gs.current?.level ?? 0;
     return LEVELS[Math.min(l, LEVELS.length - 1)].multiplier;
   }
-
   function getLevelCfg() {
     const l = gs.current?.level ?? 0;
     return LEVELS[Math.min(l, LEVELS.length - 1)];
   }
 
+  // ── Draw ──────────────────────────────────────────────────────────────────
   function drawBoard() {
     const canvas = canvasRef.current;
     if (!canvas || !gs.current) return;
-    const ctx = canvas.getContext('2d');
+    const ctx  = canvas.getContext('2d');
+    const C    = cellRef.current;
+    const W    = BOARD_WIDTH  * C;
+    const H    = BOARD_HEIGHT * C;
     const { board, piece } = gs.current;
 
-    ctx.clearRect(0, 0, BOARD_PX_W, BOARD_PX_H);
-
-    // Background
+    ctx.clearRect(0, 0, W, H);
     ctx.fillStyle = '#eef6ff';
-    ctx.fillRect(0, 0, BOARD_PX_W, BOARD_PX_H);
+    ctx.fillRect(0, 0, W, H);
 
     // Grid
     ctx.strokeStyle = 'rgba(142,202,230,0.65)';
     ctx.lineWidth = 1;
     for (let r = 0; r <= BOARD_HEIGHT; r++) {
-      ctx.beginPath(); ctx.moveTo(0, r * CELL); ctx.lineTo(BOARD_PX_W, r * CELL); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, r * C); ctx.lineTo(W, r * C); ctx.stroke();
     }
     for (let c = 0; c <= BOARD_WIDTH; c++) {
-      ctx.beginPath(); ctx.moveTo(c * CELL, 0); ctx.lineTo(c * CELL, BOARD_PX_H); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(c * C, 0); ctx.lineTo(c * C, H); ctx.stroke();
     }
 
     // Placed cells
     board.forEach((row, r) => {
-      row.forEach((cell, c) => {
-        if (cell) drawCell(ctx, c * CELL, r * CELL, cell);
+      row.forEach((col, c) => {
+        if (col) drawCell(ctx, c * C, r * C, C, col);
       });
     });
 
     if (!piece) return;
 
-    // Shadow trail — per-column bar, starts below each column's bottom cell, stops above landing
+    // Shadow trail — per-column, from bottom of each column to landing
     const dropY = getDropPosition(board, piece);
-    console.log('dropY', dropY);
-    console.log(piece)
     if (dropY > 0) {
       const colBottom = {};
       piece.shape.forEach((row, r) => {
-        row.forEach((cell, c) => {
-          if (!cell) return;
-          const col = piece.x + c;
-          if (colBottom[col] === undefined || r > colBottom[col]) colBottom[col] = r;
+        row.forEach((col, c) => {
+          if (!col) return;
+          const gc = piece.x + c;
+          if (colBottom[gc] === undefined || r > colBottom[gc]) colBottom[gc] = r;
         });
       });
-
       ctx.save();
-      ctx.globalAlpha = 0.05;
+      ctx.globalAlpha = 0.1;
       ctx.fillStyle = '#023047';
-      Object.entries(colBottom).forEach(([col, bottom]) => {
-        const x = Number(col) * CELL + 1;
-        const yStart = (piece.y + bottom + 1) * CELL;
-        const yEnd   = (piece.y + bottom + dropY + 3) * CELL; // stop at top of landing cell, no overlap
+      Object.entries(colBottom).forEach(([gc, bottom]) => {
+        const x      = Number(gc) * C + 1;
+        const yStart = (piece.y + bottom + 1) * C;
+        const yEnd   = (piece.y + bottom + dropY) * C;
         const h = yEnd - yStart;
-        if (h > 0) ctx.fillRect(x, yStart, CELL - 2, h);
+        if (h > 0) ctx.fillRect(x, yStart, C - 2, h);
       });
       ctx.restore();
     }
 
     // Active piece
     piece.shape.forEach((row, r) => {
-      row.forEach((cell, c) => {
-        if (!cell) return;
-        drawCell(ctx, (piece.x + c) * CELL, (piece.y + r) * CELL, piece.color);
+      row.forEach((col, c) => {
+        if (!col) return;
+        drawCell(ctx, (piece.x + c) * C, (piece.y + r) * C, C, piece.color);
       });
     });
   }
 
+  // ── Game logic ────────────────────────────────────────────────────────────
   function lockPiece() {
     const state = gs.current;
     if (!state || !state.piece) return;
+    const C = cellRef.current;
 
     const newBoard = placePiece(state.board, state.piece);
     const { board: clearedBoard, clearedRows } = clearLines(newBoard);
 
     if (clearedRows.length > 0) {
       setFlashingRows(clearedRows);
-      clearedRows.forEach(rowIdx => {
-        spawnRowClear(rowIdx * CELL, 0, BOARD_WIDTH, CELL);
-      });
+      clearedRows.forEach(rowIdx => spawnRowClear(rowIdx * C, 0, BOARD_WIDTH, C));
       clearTimeout(flashTimer.current);
       flashTimer.current = setTimeout(() => setFlashingRows([]), 350);
       audio.playClear(clearedRows.length);
     }
 
-    const linesCleared = clearedRows.length;
-    const newTotalLines = state.lines + linesCleared;
-    const newLinesInLevel = state.linesInLevel + linesCleared;
-    const cfg = getLevelCfg();
-    const levelAdvance = newLinesInLevel >= cfg.lines;
-    const newLevel = levelAdvance ? state.level + 1 : state.level;
-    const newLinesInLevelReset = levelAdvance ? newLinesInLevel - cfg.lines : newLinesInLevel;
-
-    const scored = linesCleared > 0
-      ? Math.round((BASE_SCORE[linesCleared] ?? 0) * getMultiplier())
-      : 0;
+    const linesCleared      = clearedRows.length;
+    const newTotalLines     = state.lines + linesCleared;
+    const newLinesInLevel   = state.linesInLevel + linesCleared;
+    const cfg               = getLevelCfg();
+    const levelAdvance      = newLinesInLevel >= cfg.lines;
+    const newLevel          = levelAdvance ? state.level + 1 : state.level;
+    const newLinesReset     = levelAdvance ? newLinesInLevel - cfg.lines : newLinesInLevel;
+    const scored            = linesCleared > 0
+      ? Math.round((BASE_SCORE[linesCleared] ?? 0) * getMultiplier()) : 0;
 
     const nextPiece = randomTetromino();
 
     if (isGameOver(clearedBoard, nextPiece)) {
-      state.board = clearedBoard;
-      state.piece = null;
-      state.gameOver = true;
+      state.board     = clearedBoard;
+      state.piece     = null;
+      state.gameOver  = true;
       drawBoard();
       setUiState(u => ({ ...u, gameOver: true }));
       audio.stopMusic();
@@ -179,30 +193,20 @@ export default function GameScreen({ onExit, audio }) {
       return;
     }
 
-    state.board = clearedBoard;
-    state.piece = nextPiece;
-    state.score += scored;
-    state.lines = newTotalLines;
-    state.level = newLevel;
-    state.linesInLevel = newLinesInLevelReset;
+    state.board        = clearedBoard;
+    state.piece        = nextPiece;
+    state.score       += scored;
+    state.lines        = newTotalLines;
+    state.level        = newLevel;
+    state.linesInLevel = newLinesReset;
 
-    setUiState({
-      score: state.score,
-      level: newLevel + 1,
-      lines: newTotalLines,
-      linesInLevel: newLinesInLevelReset,
-      paused: false,
-      gameOver: false,
-      hardDropFlash: false,
-    });
+    setUiState({ score: state.score, level: newLevel + 1, lines: newTotalLines, linesInLevel: newLinesReset, paused: false, gameOver: false, hardDropFlash: false });
     drawBoard();
   }
 
   function tick() {
     const state = gs.current;
-    if (!state || state.paused || state.gameOver) return;
-    if (!state.piece) return;
-
+    if (!state || state.paused || state.gameOver || !state.piece) return;
     if (isValidPosition(state.board, state.piece, 0, 1)) {
       state.piece.y += 1;
       drawBoard();
@@ -215,9 +219,7 @@ export default function GameScreen({ onExit, audio }) {
     clearTimeout(tickTimer.current);
     tickTimer.current = setTimeout(() => {
       tick();
-      if (gs.current && !gs.current.paused && !gs.current.gameOver) {
-        scheduleTick();
-      }
+      if (gs.current && !gs.current.paused && !gs.current.gameOver) scheduleTick();
     }, getSpeed());
   }
 
@@ -235,12 +237,11 @@ export default function GameScreen({ onExit, audio }) {
     const state = gs.current;
     if (!state || !state.piece || state.paused || state.gameOver) return;
     const rotated = rotate(state.piece.shape, dir);
-    const kicks = [0, 1, -1, 2, -2];
-    for (const kick of kicks) {
+    for (const kick of [0, 1, -1, 2, -2]) {
       const test = { ...state.piece, shape: rotated, x: state.piece.x + kick };
       if (isValidPosition(state.board, test)) {
         state.piece.shape = rotated;
-        state.piece.x += kick;
+        state.piece.x    += kick;
         audio.playRotate();
         drawBoard();
         return;
@@ -251,18 +252,12 @@ export default function GameScreen({ onExit, audio }) {
   function hardDrop() {
     const state = gs.current;
     if (!state || !state.piece || state.paused || state.gameOver) return;
+    const C    = cellRef.current;
     const drop = getDropPosition(state.board, state.piece);
-    if (drop === 0) {
-      lockPiece();
-      scheduleTick();
-      return;
-    }
 
-    const dropScore = drop * HARD_DROP_SCORE * (state.level + 1);
-    state.score += dropScore;
-
-    const landX = (state.piece.x + Math.floor(state.piece.shape[0].length / 2)) * CELL + CELL / 2;
-    const landY = (state.piece.y + drop + state.piece.shape.length) * CELL;
+    state.score += drop * HARD_DROP_SCORE * (state.level + 1);
+    const landX  = (state.piece.x + Math.floor(state.piece.shape[0].length / 2)) * C + C / 2;
+    const landY  = (state.piece.y + drop + state.piece.shape.length) * C;
     spawnHardDrop(landX, landY);
 
     setUiState(u => ({ ...u, hardDropFlash: true, score: state.score }));
@@ -271,7 +266,6 @@ export default function GameScreen({ onExit, audio }) {
     state.piece.y += drop;
     audio.playDrop();
     drawBoard();
-
     clearTimeout(tickTimer.current);
     lockPiece();
     if (!state.gameOver) scheduleTick();
@@ -280,12 +274,7 @@ export default function GameScreen({ onExit, audio }) {
   function startGame() {
     clearTimeout(tickTimer.current);
     clearInterval(touchData.current.dragInterval);
-    gs.current = {
-      board: createEmptyBoard(),
-      piece: randomTetromino(),
-      score: 0, level: 0, lines: 0, linesInLevel: 0,
-      paused: false, gameOver: false,
-    };
+    gs.current = { board: createEmptyBoard(), piece: randomTetromino(), score: 0, level: 0, lines: 0, linesInLevel: 0, paused: false, gameOver: false };
     setUiState({ score: 0, level: 1, lines: 0, linesInLevel: 0, paused: false, gameOver: false, hardDropFlash: false });
     setFlashingRows([]);
     drawBoard();
@@ -302,7 +291,6 @@ export default function GameScreen({ onExit, audio }) {
     else clearTimeout(tickTimer.current);
   }
 
-  // Init
   useEffect(() => {
     startGame();
     return () => {
@@ -313,37 +301,33 @@ export default function GameScreen({ onExit, audio }) {
     };
   }, []);
 
-  // Touch handlers
+  // ── Touch ─────────────────────────────────────────────────────────────────
   function handleTouchStart(e) {
     e.preventDefault();
-    const t = e.touches[0];
+    const t  = e.touches[0];
     const td = touchData.current;
-    td.startX = t.clientX;
-    td.startY = t.clientY;
-    td.lastX = t.clientX;
-    td.lastY = t.clientY;
-    td.moved = false;
+    td.startX = td.lastX = t.clientX;
+    td.startY = td.lastY = t.clientY;
+    td.moved  = false;
     td.holding = true;
-
     clearInterval(td.dragInterval);
     td.dragInterval = setInterval(() => {
       if (!td.holding) return;
+      const C  = cellRef.current;
       const dx = td.lastX - td.startX;
-      if (Math.abs(dx) >= CELL) {
-        const dir = dx > 0 ? 1 : -1;
-        movePiece(dir);
-        td.startX = td.lastX - (dx % CELL);
-        td.moved = true;
+      if (Math.abs(dx) >= C) {
+        movePiece(dx > 0 ? 1 : -1);
+        td.startX = td.lastX - (dx % C);
+        td.moved  = true;
       }
     }, 75);
   }
 
   function handleTouchMove(e) {
     e.preventDefault();
-    const t = e.touches[0];
-    touchData.current.lastX = t.clientX;
-    touchData.current.lastY = t.clientY;
-    const dy = t.clientY - touchData.current.startY;
+    touchData.current.lastX = e.touches[0].clientX;
+    touchData.current.lastY = e.touches[0].clientY;
+    const dy = touchData.current.lastY - touchData.current.startY;
     if (dy > 55 && !touchData.current.moved) {
       touchData.current.moved = true;
       clearInterval(touchData.current.dragInterval);
@@ -355,51 +339,45 @@ export default function GameScreen({ onExit, audio }) {
     e.preventDefault();
     clearInterval(touchData.current.dragInterval);
     touchData.current.holding = false;
-    const td = touchData.current;
-    const dx = td.lastX - td.startX;
-    const dy = td.lastY - td.startY;
-
-    if (!td.moved && Math.abs(dx) < 10 && Math.abs(dy) < 30) {
-      const canvas = canvasRef.current;
-      const rect = canvas?.getBoundingClientRect();
+    const { lastX, lastY, startX, startY, moved } = touchData.current;
+    if (!moved && Math.abs(lastX - startX) < 10 && Math.abs(lastY - startY) < 30) {
+      const rect = canvasRef.current?.getBoundingClientRect();
       if (rect) {
-        const tapX = e.changedTouches[0]?.clientX ?? td.startX;
-        const midX = rect.left + rect.width / 2;
-        rotatePiece(tapX > midX ? 1 : -1);
+        const tapX = e.changedTouches[0]?.clientX ?? startX;
+        rotatePiece(tapX > rect.left + rect.width / 2 ? 1 : -1);
       }
     }
   }
 
+  // ── Render ────────────────────────────────────────────────────────────────
   const { score, level, lines, linesInLevel, paused, gameOver, hardDropFlash } = uiState;
-  const levelCfg = getLevelCfg();
+  const levelCfg    = getLevelCfg();
   const progressPct = Math.min(100, (linesInLevel / levelCfg.lines) * 100);
+  const boardW      = BOARD_WIDTH  * cell;
+  const boardH      = BOARD_HEIGHT * cell;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'linear-gradient(160deg, #e8f4fd 0%, #f5f9ff 100%)', overflow: 'hidden' }}>
       {/* Top bar */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'white', boxShadow: '0 2px 8px rgba(2,48,71,0.08)', flexShrink: 0 }}>
         <button onClick={togglePause} style={btnStyle(COLORS.skyBlue)}>
-          {paused
-            ? <PlayIcon />
-            : <PauseIcon />}
+          {paused ? <PlayIcon /> : <PauseIcon />}
         </button>
-
         <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
           <ScorePill label="SCORE" value={score.toLocaleString()} color={COLORS.orange} />
-          <ScorePill label="LV" value={level} color={COLORS.blueGreen} />
-          <ScorePill label="LINES" value={lines} color={COLORS.deepSpace} />
+          <ScorePill label="LV"    value={level}                  color={COLORS.blueGreen} />
+          <ScorePill label="LINES" value={lines}                  color={COLORS.deepSpace} />
         </div>
-
         <button onClick={onExit} style={btnStyle('#f0f0f0')}>
           <CloseIcon />
         </button>
       </div>
 
-      {/* Canvas area */}
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: '8px 0' }}>
+      {/* Canvas area — fills remaining space, ResizeObserver watches this */}
+      <div ref={areaRef} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: '8px' }}>
         <div
           style={{
-            position: 'relative', width: BOARD_PX_W, height: BOARD_PX_H,
+            position: 'relative', width: boardW, height: boardH,
             borderRadius: 8, overflow: 'hidden',
             boxShadow: `0 8px 40px rgba(2,48,71,0.18), 0 0 0 2px ${COLORS.skyBlue}`,
             background: hardDropFlash ? 'rgba(255,183,3,0.25)' : 'transparent',
@@ -409,9 +387,9 @@ export default function GameScreen({ onExit, audio }) {
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
-          <canvas ref={canvasRef} width={BOARD_PX_W} height={BOARD_PX_H} style={{ display: 'block', touchAction: 'none', userSelect: 'none' }} />
-          <ParticleCanvas particles={particles} width={BOARD_PX_W} height={BOARD_PX_H} />
-          <RowFlash flashingRows={flashingRows} cellSize={CELL} boardX={0} />
+          <canvas ref={canvasRef} width={boardW} height={boardH} style={{ display: 'block', touchAction: 'none', userSelect: 'none' }} />
+          <ParticleCanvas particles={particles} width={boardW} height={boardH} />
+          <RowFlash flashingRows={flashingRows} cellSize={cell} boardX={0} />
 
           {paused && !gameOver && (
             <Overlay>
@@ -421,7 +399,6 @@ export default function GameScreen({ onExit, audio }) {
               <OverlayBtn onClick={onExit} color={COLORS.blueGreen} mt>EXIT</OverlayBtn>
             </Overlay>
           )}
-
           {gameOver && (
             <Overlay>
               <OverlayTitle color={COLORS.orange}>GAME OVER</OverlayTitle>
@@ -452,14 +429,10 @@ export default function GameScreen({ onExit, audio }) {
   );
 }
 
-// ── Sub-components ──────────────────────────────────────────────────────────
+// ── Sub-components ────────────────────────────────────────────────────────────
 
 function btnStyle(bg) {
-  return {
-    width: 40, height: 40, border: 'none', borderRadius: 12,
-    background: bg, cursor: 'pointer',
-    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-  };
+  return { width: 40, height: 40, border: 'none', borderRadius: 12, background: bg, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 };
 }
 
 function ScorePill({ label, value, color }) {
@@ -474,11 +447,8 @@ function ScorePill({ label, value, color }) {
 function Overlay({ children }) {
   function block(e) { e.stopPropagation(); }
   return (
-    <div
-      onTouchStart={block} onTouchMove={block} onTouchEnd={block}
-      onClick={block}
-      style={{ position: 'absolute', inset: 0, background: 'rgba(238,246,255,0.92)', backdropFilter: 'blur(8px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 20 }}
-    >
+    <div onTouchStart={block} onTouchMove={block} onTouchEnd={block} onClick={block}
+      style={{ position: 'absolute', inset: 0, background: 'rgba(238,246,255,0.92)', backdropFilter: 'blur(8px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 20 }}>
       {children}
     </div>
   );
@@ -487,11 +457,9 @@ function Overlay({ children }) {
 function OverlayTitle({ children, color = COLORS.deepSpace }) {
   return <div style={{ fontSize: 28, fontWeight: 900, color, marginBottom: 6, letterSpacing: 1 }}>{children}</div>;
 }
-
 function OverlaySubtitle({ children }) {
   return <div style={{ fontSize: 13, color: COLORS.blueGreen, marginBottom: 20 }}>{children}</div>;
 }
-
 function OverlayBtn({ children, onClick, color, mt }) {
   return (
     <button onClick={onClick} style={{ background: color, color: 'white', border: 'none', borderRadius: 16, padding: '12px 42px', fontSize: 15, fontWeight: 800, cursor: 'pointer', letterSpacing: 1, boxShadow: `0 4px 16px ${color}55`, ...(mt ? { marginTop: 10 } : {}) }}>
@@ -500,12 +468,6 @@ function OverlayBtn({ children, onClick, color, mt }) {
   );
 }
 
-function PauseIcon() {
-  return <svg width="18" height="18" viewBox="0 0 24 24" fill={COLORS.deepSpace}><rect x="5" y="3" width="4" height="18" rx="1"/><rect x="15" y="3" width="4" height="18" rx="1"/></svg>;
-}
-function PlayIcon() {
-  return <svg width="18" height="18" viewBox="0 0 24 24" fill={COLORS.deepSpace}><polygon points="5,3 19,12 5,21"/></svg>;
-}
-function CloseIcon() {
-  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={COLORS.deepSpace} strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>;
-}
+function PauseIcon() { return <svg width="18" height="18" viewBox="0 0 24 24" fill={COLORS.deepSpace}><rect x="5" y="3" width="4" height="18" rx="1"/><rect x="15" y="3" width="4" height="18" rx="1"/></svg>; }
+function PlayIcon()  { return <svg width="18" height="18" viewBox="0 0 24 24" fill={COLORS.deepSpace}><polygon points="5,3 19,12 5,21"/></svg>; }
+function CloseIcon() { return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={COLORS.deepSpace} strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>; }
