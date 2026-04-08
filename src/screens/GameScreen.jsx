@@ -223,16 +223,6 @@ export default function GameScreen({ onExit, audio }) {
     }, getSpeed());
   }
 
-  function movePiece(dir) {
-    const state = gs.current;
-    if (!state || !state.piece || state.paused || state.gameOver) return;
-    if (isValidPosition(state.board, state.piece, dir, 0)) {
-      state.piece.x += dir;
-      audio.playMove();
-      drawBoard();
-    }
-  }
-
   function rotatePiece(dir) {
     const state = gs.current;
     if (!state || !state.piece || state.paused || state.gameOver) return;
@@ -306,32 +296,55 @@ export default function GameScreen({ onExit, audio }) {
     e.preventDefault();
     const t  = e.touches[0];
     const td = touchData.current;
-    td.startX = td.lastX = t.clientX;
-    td.startY = td.lastY = t.clientY;
-    td.moved  = false;
-    td.holding = true;
+    td.startX      = td.lastX = t.clientX;
+    td.startY      = td.lastY = t.clientY;
+    td.moved       = false;
+    td.holding     = true;
+    td.pieceStartX = gs.current?.piece?.x ?? 0;
     clearInterval(td.dragInterval);
-    td.dragInterval = setInterval(() => {
-      if (!td.holding) return;
-      const C  = cellRef.current;
-      const dx = td.lastX - td.startX;
-      if (Math.abs(dx) >= C) {
-        movePiece(dx > 0 ? 1 : -1);
-        td.startX = td.lastX - (dx % C);
-        td.moved  = true;
-      }
-    }, 75);
   }
 
   function handleTouchMove(e) {
     e.preventDefault();
-    touchData.current.lastX = e.touches[0].clientX;
-    touchData.current.lastY = e.touches[0].clientY;
-    const dy = touchData.current.lastY - touchData.current.startY;
-    if (dy > 70 && !touchData.current.moved) {
-      touchData.current.moved = true;
-      clearInterval(touchData.current.dragInterval);
+    const t  = e.touches[0];
+    const td = touchData.current;
+    td.lastX = t.clientX;
+    td.lastY = t.clientY;
+
+    const dy = td.lastY - td.startY;
+    if (dy > 70 && !td.moved) {
+      td.moved = true;
       hardDrop();
+      return;
+    }
+
+    // Horizontal: calculate total offset in cells from touch start
+    const state = gs.current;
+    if (!state || !state.piece || state.paused || state.gameOver) return;
+    const C          = cellRef.current;
+    const dx         = td.lastX - td.startX;
+    const cellOffset = Math.round(dx / C);
+    if (cellOffset === 0) return;
+
+    const targetX = td.pieceStartX + cellOffset;
+    const clamped = Math.max(
+      0,
+      Math.min(BOARD_WIDTH - state.piece.shape[0].length, targetX),
+    );
+    if (clamped !== state.piece.x) {
+      // Walk toward target respecting collisions
+      const dir      = clamped > state.piece.x ? 1 : -1;
+      let   steps    = Math.abs(clamped - state.piece.x);
+      let   didMove  = false;
+      while (steps-- > 0 && isValidPosition(state.board, state.piece, dir, 0)) {
+        state.piece.x += dir;
+        didMove = true;
+      }
+      if (didMove) {
+        td.moved = true;
+        audio.playMove();
+        drawBoard();
+      }
     }
   }
 
