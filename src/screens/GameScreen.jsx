@@ -542,6 +542,9 @@ export default function GameScreen({ onExit, audio }) {
             background: hardDropFlash ? 'rgba(255,183,3,0.25)' : 'transparent',
             transition: 'background 0.1s',
             cursor: 'pointer',
+            WebkitTapHighlightColor: 'transparent',
+            userSelect: 'none',
+            WebkitUserSelect: 'none',
           }}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
