@@ -129,12 +129,12 @@ export default function GameScreen({ onExit, audio }) {
         });
       });
       ctx.save();
-      ctx.globalAlpha = 0.1;
+      ctx.globalAlpha = 0.05;
       ctx.fillStyle = '#023047';
       Object.entries(colBottom).forEach(([gc, bottom]) => {
         const x      = Number(gc) * C + 1;
         const yStart = (piece.y + bottom + 1) * C;
-        const yEnd   = (piece.y + bottom + dropY) * C;
+        const yEnd   = (piece.y + bottom + dropY + 4) * C;
         const h = yEnd - yStart;
         if (h > 0) ctx.fillRect(x, yStart, C - 2, h);
       });
@@ -320,7 +320,7 @@ export default function GameScreen({ onExit, audio }) {
     td.lastY = t.clientY;
 
     const dy = td.lastY - td.startY;
-    if (dy > 70 && !td.moved) {
+    if (dy > 65 && !td.moved) {
       td.moved = true;
       hardDrop();
       return;

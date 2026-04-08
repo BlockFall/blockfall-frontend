@@ -8,6 +8,8 @@ export const COLORS = {
   deepSpace: '#023047',
   amber: '#ffb703',
   orange: '#fb8500',
+  copperWood: '#b1740f',
+  brightMarine: '#296eb4',
 };
 
 // 5 Tetromino shapes
@@ -44,7 +46,7 @@ export const TETROMINOES = {
       [0, 1],
       [1, 1],
     ],
-    color: COLORS.skyBlue,
+    color: COLORS.copperWood,
   },
   S: {
     shape: [
@@ -58,7 +60,7 @@ export const TETROMINOES = {
       [1, 1, 0],
       [0, 1, 1],
     ],
-    color: COLORS.deepSpace,
+    color: COLORS.brightMarine,
   }
 };
 
