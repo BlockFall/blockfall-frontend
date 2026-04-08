@@ -1,3 +1,4 @@
+// eslint-disable-next-line react-refresh/only-export-components
 import { useEffect, useRef, useState } from 'react';
 import { COLORS } from '../game/constants';
 

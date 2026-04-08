@@ -70,9 +70,6 @@ export default function GameScreen({ onExit, audio }) {
     return () => obs.disconnect();
   }, []);
 
-  // Redraw whenever cell size changes
-  useEffect(() => { drawBoard(); }, [cell]);
-
   // ── Helpers ───────────────────────────────────────────────────────────────
   function getSpeed() {
     const l = gs.current?.level ?? 0;
@@ -152,6 +149,9 @@ export default function GameScreen({ onExit, audio }) {
       });
     });
   }
+
+  // Redraw whenever cell size changes (placed after drawBoard is declared)
+  useEffect(() => { drawBoard(); }, [cell]);
 
   // ── Game logic ────────────────────────────────────────────────────────────
   function lockPiece() {
@@ -282,14 +282,20 @@ export default function GameScreen({ onExit, audio }) {
   }
 
   useEffect(() => {
-    startGame();
+    // Initialize gs.current directly — initial useState values already match,
+    // so no setState call needed here (avoids cascading renders).
+    gs.current = { board: createEmptyBoard(), piece: randomTetromino(), score: 0, level: 0, lines: 0, linesInLevel: 0, paused: false, gameOver: false };
+    drawBoard();
+    scheduleTick();
+    audio.startMusic();
+    const td = touchData.current;
     return () => {
       clearTimeout(tickTimer.current);
       clearTimeout(flashTimer.current);
-      clearInterval(touchData.current?.dragInterval);
+      clearInterval(td?.dragInterval);
       audio.stopMusic();
     };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Touch ─────────────────────────────────────────────────────────────────
   function handleTouchStart(e) {
@@ -364,7 +370,8 @@ export default function GameScreen({ onExit, audio }) {
 
   // ── Render ────────────────────────────────────────────────────────────────
   const { score, level, lines, linesInLevel, paused, gameOver, hardDropFlash } = uiState;
-  const levelCfg    = getLevelCfg();
+  // `level` is 1-indexed in state; derive config without touching refs
+  const levelCfg    = LEVELS[Math.min(level - 1, LEVELS.length - 1)];
   const progressPct = Math.min(100, (linesInLevel / levelCfg.lines) * 100);
   const boardW      = BOARD_WIDTH  * cell;
   const boardH      = BOARD_HEIGHT * cell;
