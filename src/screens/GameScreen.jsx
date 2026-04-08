@@ -370,6 +370,143 @@ export default function GameScreen({ onExit, audio }) {
     }
   }
 
+  // ── Mouse (desktop) ───────────────────────────────────────────────────────
+  function handleMouseDown(e) {
+    if (e.button !== 0) return;
+    const td = touchData.current;
+    td.startX      = td.lastX = e.clientX;
+    td.startY      = td.lastY = e.clientY;
+    td.moved       = false;
+    td.holding     = true;
+    td.pieceStartX = gs.current?.piece?.x ?? 0;
+    clearInterval(td.dragInterval);
+  }
+
+  function handleMouseMove(e) {
+    const td = touchData.current;
+    if (!td.holding) return;
+    td.lastX = e.clientX;
+    td.lastY = e.clientY;
+
+    const dy = td.lastY - td.startY;
+    if (dy > 65 && !td.moved) {
+      td.moved = true;
+      hardDrop();
+      return;
+    }
+
+    const state = gs.current;
+    if (!state || !state.piece || state.paused || state.gameOver) return;
+    const C          = cellRef.current;
+    const dx         = td.lastX - td.startX;
+    const cellOffset = Math.round(dx / C);
+    if (cellOffset === 0) return;
+
+    const targetX = td.pieceStartX + cellOffset;
+    const clamped = Math.max(
+      0,
+      Math.min(BOARD_WIDTH - state.piece.shape[0].length, targetX),
+    );
+    if (clamped !== state.piece.x) {
+      const dir     = clamped > state.piece.x ? 1 : -1;
+      let   steps   = Math.abs(clamped - state.piece.x);
+      let   didMove = false;
+      while (steps-- > 0 && isValidPosition(state.board, state.piece, dir, 0)) {
+        state.piece.x += dir;
+        didMove = true;
+      }
+      if (didMove) {
+        td.moved = true;
+        audio.playMove();
+        drawBoard();
+      }
+    }
+  }
+
+  function handleMouseUp(e) {
+    if (e.button !== 0) return;
+    const td = touchData.current;
+    if (!td.holding) return;
+    clearInterval(td.dragInterval);
+    td.holding = false;
+    const { lastX, lastY, startX, startY, moved } = td;
+    if (!moved && Math.abs(lastX - startX) < 10 && Math.abs(lastY - startY) < 30) {
+      const rect = canvasRef.current?.getBoundingClientRect();
+      if (rect) rotatePiece(e.clientX > rect.left + rect.width / 2 ? 1 : -1);
+    }
+  }
+
+  function handleMouseLeave() {
+    touchData.current.holding = false;
+    clearInterval(touchData.current.dragInterval);
+  }
+
+  // ── Keyboard ──────────────────────────────────────────────────────────────
+  useEffect(() => {
+    function onKeyDown(e) {
+      const state = gs.current;
+      if (!state) return;
+      switch (e.key) {
+        case 'ArrowLeft':
+          e.preventDefault();
+          if (!state.paused && !state.gameOver && state.piece &&
+              isValidPosition(state.board, state.piece, -1, 0)) {
+            state.piece.x -= 1;
+            audio.playMove();
+            drawBoard();
+          }
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          if (!state.paused && !state.gameOver && state.piece &&
+              isValidPosition(state.board, state.piece, 1, 0)) {
+            state.piece.x += 1;
+            audio.playMove();
+            drawBoard();
+          }
+          break;
+        case 'ArrowDown':
+          e.preventDefault();
+          if (!state.paused && !state.gameOver && state.piece) {
+            if (isValidPosition(state.board, state.piece, 0, 1)) {
+              state.piece.y += 1;
+              drawBoard();
+            } else {
+              clearTimeout(tickTimer.current);
+              lockPiece();
+              if (!state.gameOver) scheduleTick();
+            }
+          }
+          break;
+        case 'ArrowUp':
+        case 'x':
+        case 'X':
+          e.preventDefault();
+          rotatePiece(1);
+          break;
+        case 'z':
+        case 'Z':
+          e.preventDefault();
+          rotatePiece(-1);
+          break;
+        case ' ':
+          e.preventDefault();
+          hardDrop();
+          break;
+        case 'Escape':
+        case 'p':
+        case 'P':
+          e.preventDefault();
+          togglePause();
+          break;
+        default:
+          break;
+      }
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── Render ────────────────────────────────────────────────────────────────
   const { score, level, lines, linesInLevel, paused, gameOver, hardDropFlash } = uiState;
   // `level` is 1-indexed in state; derive config without touching refs
@@ -404,10 +541,15 @@ export default function GameScreen({ onExit, audio }) {
             boxShadow: `0 8px 40px rgba(2,48,71,0.18), 0 0 0 2px ${COLORS.skyBlue}`,
             background: hardDropFlash ? 'rgba(255,183,3,0.25)' : 'transparent',
             transition: 'background 0.1s',
+            cursor: 'pointer',
           }}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseLeave}
         >
           <canvas ref={canvasRef} width={boardW} height={boardH} style={{ display: 'block', touchAction: 'none', userSelect: 'none' }} />
           <ParticleCanvas particles={particles} width={boardW} height={boardH} />
@@ -469,7 +611,8 @@ function ScorePill({ label, value, color }) {
 function Overlay({ children }) {
   function block(e) { e.stopPropagation(); }
   return (
-    <div onTouchStart={block} onTouchMove={block} onTouchEnd={block} onClick={block}
+    <div onTouchStart={block} onTouchMove={block} onTouchEnd={block}
+      onMouseDown={block} onMouseMove={block} onMouseUp={block} onClick={block}
       style={{ position: 'absolute', inset: 0, background: 'rgba(238,246,255,0.92)', backdropFilter: 'blur(8px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 20 }}>
       {children}
     </div>
