@@ -4,14 +4,45 @@ export function createEmptyBoard() {
   return Array.from({ length: BOARD_HEIGHT }, () => Array(BOARD_WIDTH).fill(null));
 }
 
+// Piece selection state — persists across pieces within a game session
+const pieceHistory = {
+  counts: Object.fromEntries(TETROMINO_KEYS.map(k => [k, 0])),
+  recent: [],   // last 2 keys
+};
+
+export function resetPieceHistory() {
+  pieceHistory.counts = Object.fromEntries(TETROMINO_KEYS.map(k => [k, 0]));
+  pieceHistory.recent = [];
+}
+
 export function randomTetromino() {
-  const key = TETROMINO_KEYS[Math.floor(Math.random() * TETROMINO_KEYS.length)];
+  const { counts, recent } = pieceHistory;
+  const lastTwo = recent.slice(-2);
+  // Block a key if it appeared as both of the last 2 pieces (would be 3 in a row)
+  const blocked = lastTwo.length === 2 && lastTwo[0] === lastTwo[1] ? lastTwo[0] : null;
+
+  // Weight = 1 / (count + 1), so under-represented pieces are more likely.
+  // Blocked key gets weight 0.
+  const weights = TETROMINO_KEYS.map(k => (k === blocked ? 0 : 1 / (counts[k] + 1)));
+  const total   = weights.reduce((s, w) => s + w, 0);
+
+  let rand = Math.random() * total;
+  let key  = TETROMINO_KEYS[TETROMINO_KEYS.length - 1]; // fallback
+  for (let i = 0; i < TETROMINO_KEYS.length; i++) {
+    rand -= weights[i];
+    if (rand <= 0) { key = TETROMINO_KEYS[i]; break; }
+  }
+
+  counts[key]++;
+  recent.push(key);
+  if (recent.length > 2) recent.shift();
+
   return {
-    type: key,
+    type:  key,
     shape: TETROMINOES[key].shape.map(row => [...row]),
     color: TETROMINOES[key].color,
-    x: Math.floor(BOARD_WIDTH / 2) - Math.floor(TETROMINOES[key].shape[0].length / 2),
-    y: 0,
+    x:     Math.floor(BOARD_WIDTH / 2) - Math.floor(TETROMINOES[key].shape[0].length / 2),
+    y:     0,
   };
 }
 

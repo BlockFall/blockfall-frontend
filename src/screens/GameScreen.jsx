@@ -3,7 +3,7 @@ import {
   BOARD_WIDTH, BOARD_HEIGHT, COLORS, LEVELS, BASE_SCORE, HARD_DROP_SCORE,
 } from '../game/constants';
 import {
-  createEmptyBoard, randomTetromino, rotate, isValidPosition,
+  createEmptyBoard, randomTetromino, resetPieceHistory, rotate, isValidPosition,
   placePiece, clearLines, getDropPosition, isGameOver,
 } from '../game/engine';
 import { useParticles, ParticleCanvas, RowFlash } from '../effects/ParticleSystem';
@@ -264,6 +264,7 @@ export default function GameScreen({ onExit, audio }) {
   function startGame() {
     clearTimeout(tickTimer.current);
     clearInterval(touchData.current.dragInterval);
+    resetPieceHistory();
     gs.current = { board: createEmptyBoard(), piece: randomTetromino(), score: 0, level: 0, lines: 0, linesInLevel: 0, paused: false, gameOver: false };
     setUiState({ score: 0, level: 1, lines: 0, linesInLevel: 0, paused: false, gameOver: false, hardDropFlash: false });
     setFlashingRows([]);
@@ -284,6 +285,7 @@ export default function GameScreen({ onExit, audio }) {
   useEffect(() => {
     // Initialize gs.current directly — initial useState values already match,
     // so no setState call needed here (avoids cascading renders).
+    resetPieceHistory();
     gs.current = { board: createEmptyBoard(), piece: randomTetromino(), score: 0, level: 0, lines: 0, linesInLevel: 0, paused: false, gameOver: false };
     drawBoard();
     scheduleTick();
