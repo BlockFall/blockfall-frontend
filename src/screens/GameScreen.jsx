@@ -43,6 +43,7 @@ export default function GameScreen({ onExit, audio }) {
   const tickTimer = useRef(null);
   const flashTimer = useRef(null);
   const touchData = useRef({ startX: 0, startY: 0, lastX: 0, lastY: 0, moved: false, holding: false, dragInterval: null });
+  const usingKeyboard = useRef(false);
 
   const [cell, setCell] = useState(28);   // triggers re-render for canvas size / layout
   const [uiState, setUiState] = useState({
@@ -73,7 +74,8 @@ export default function GameScreen({ onExit, audio }) {
   // ── Helpers ───────────────────────────────────────────────────────────────
   function getSpeed() {
     const l = gs.current?.level ?? 0;
-    return LEVELS[Math.min(l, LEVELS.length - 1)].speed;
+    const cfg = LEVELS[Math.min(l, LEVELS.length - 1)];
+    return usingKeyboard.current ? cfg.speedKeyboard : cfg.speedTouch;
   }
   function getMultiplier() {
     const l = gs.current?.level ?? 0;
@@ -301,6 +303,7 @@ export default function GameScreen({ onExit, audio }) {
 
   // ── Touch ─────────────────────────────────────────────────────────────────
   function handleTouchStart(e) {
+    usingKeyboard.current = false;
     e.preventDefault();
     const t  = e.touches[0];
     const td = touchData.current;
@@ -444,6 +447,7 @@ export default function GameScreen({ onExit, audio }) {
   // ── Keyboard ──────────────────────────────────────────────────────────────
   useEffect(() => {
     function onKeyDown(e) {
+      usingKeyboard.current = true;
       const state = gs.current;
       if (!state) return;
       switch (e.key) {

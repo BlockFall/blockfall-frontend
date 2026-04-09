@@ -68,21 +68,21 @@ export const TETROMINO_KEYS = Object.keys(TETROMINOES);
 
 // Level config: lines to advance, speed (ms per tick), score multiplier
 export const LEVELS = [
-  { lines: 10, speed: 800, multiplier: 1 },
-  { lines: 10, speed: 650, multiplier: 1.5 },
-  { lines: 10, speed: 500, multiplier: 2 },
-  { lines: 10, speed: 400, multiplier: 2.5 },
-  { lines: 10, speed: 300, multiplier: 3 },
-  { lines: 10, speed: 220, multiplier: 4 },
-  { lines: 10, speed: 160, multiplier: 5 },
-  { lines: 10, speed: 120, multiplier: 6 },
-  { lines: 10, speed: 90,  multiplier: 7 },
-  { lines: 10, speed: 70,  multiplier: 8 },
+  { lines: 10, speedTouch: 750, speedKeyboard: 700, multiplier: 1 },
+  { lines: 10, speedTouch: 600, speedKeyboard: 570, multiplier: 1.5 },
+  { lines: 10, speedTouch: 477, speedKeyboard: 455, multiplier: 2 },
+  { lines: 10, speedTouch: 381, speedKeyboard: 360, multiplier: 2.5 },
+  { lines: 10, speedTouch: 305, speedKeyboard: 285, multiplier: 3 },
+  { lines: 10, speedTouch: 244, speedKeyboard: 225, multiplier: 4.1 },
+  { lines: 10, speedTouch: 195, speedKeyboard: 175, multiplier: 5.3 },
+  { lines: 10, speedTouch: 157, speedKeyboard: 135, multiplier: 6.7 },
+  { lines: 10, speedTouch: 125, speedKeyboard: 105, multiplier: 8.2 },
+  { lines: 10, speedTouch: 100, speedKeyboard: 80,  multiplier: 10 },
 ];
 
 export const BASE_SCORE = {
   1: 100,
-  2: 300,
+  2: 250,
   3: 500,
   4: 800,
 };
