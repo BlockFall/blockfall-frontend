@@ -246,10 +246,9 @@ export default function HomeScreen({ onPlay, onConnectWallet, isConnected, audio
           /* Play button */
           <button
             onClick={onPlay}
-            disabled={noEnergy}
             style={{
               background: noEnergy
-                ? '#ccc'
+                ? `linear-gradient(135deg, ${COLORS.blueGreen}, #0ea5e9)`
                 : `linear-gradient(135deg, ${COLORS.orange}, ${COLORS.amber})`,
               color: 'white',
               border: 'none',
@@ -257,24 +256,23 @@ export default function HomeScreen({ onPlay, onConnectWallet, isConnected, audio
               padding: '18px 64px',
               fontSize: 22,
               fontWeight: 900,
-              cursor: noEnergy ? 'not-allowed' : 'pointer',
+              cursor: 'pointer',
               letterSpacing: 2,
-              boxShadow: noEnergy ? 'none' : `0 8px 32px ${COLORS.orange}66`,
-              animation: noEnergy ? 'none' : 'pulseBtn 2s ease-in-out infinite',
+              boxShadow: noEnergy
+                ? `0 8px 32px ${COLORS.blueGreen}66`
+                : `0 8px 32px ${COLORS.orange}66`,
+              animation: 'pulseBtn 2s ease-in-out infinite',
               position: 'relative',
               overflow: 'hidden',
               marginBottom: 32,
-              opacity: noEnergy ? 0.7 : 1,
             }}
           >
-            {noEnergy ? 'NO ENERGY' : 'PLAY'}
-            {!noEnergy && (
-              <span style={{
-                position: 'absolute', top: 0, left: '-100%', width: '60%', height: '100%',
-                background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent)',
-                animation: 'shine 2.5s ease-in-out infinite',
-              }} />
-            )}
+            {noEnergy ? 'BUY & PLAY' : 'PLAY'}
+            <span style={{
+              position: 'absolute', top: 0, left: '-100%', width: '60%', height: '100%',
+              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent)',
+              animation: 'shine 2.5s ease-in-out infinite',
+            }} />
           </button>
         ) : (
           /* Connect Wallet button */

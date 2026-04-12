@@ -45,14 +45,19 @@ export default function App() {
   }, [connect]);
 
   const handlePlay = useCallback(async () => {
-    if (energy <= 0) return;
     audio.initAudio();
 
-    const success = await startPlay();
-    if (success) {
+    if (energy > 0) {
       const next = energy - 1;
       setEnergy(next);
       saveEnergy(next);
+      setScreen('game');
+      return;
+    }
+
+    // energy === 0: buy a session from the contract
+    const success = await startPlay();
+    if (success) {
       setScreen('game');
     }
   }, [energy, audio, startPlay]);
