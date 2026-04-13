@@ -12,7 +12,7 @@ export const COLORS = {
   brightMarine: '#296eb4',
 };
 
-// 5 Tetromino shapes
+// 5 shapes
 export const TETROMINOES = {
   I: {
     shape: [[1, 1, 1, 1]],

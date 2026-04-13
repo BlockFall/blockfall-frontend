@@ -7,7 +7,7 @@ const SECTIONS = [
     title: 'What is BlockFall?',
     color: COLORS.blueGreen,
     content:
-      'BlockFall is a classic block-stacking game. Tetrominoes — shaped blocks — fall from the top of the board. Stack them to fill complete horizontal lines and they vanish, earning you points. The board fills up fast — how long can you last?',
+      'BlockFall is a classic block-stacking game. Shaped blocks fall from the top of the board. Stack them to fill complete horizontal lines and they vanish, earning you points. The board fills up fast — how long can you last?',
   },
   {
     icon: '🎮',
@@ -26,19 +26,19 @@ const SECTIONS = [
     color: COLORS.amber,
     items: [
       { icon: '1️⃣', text: '1 line cleared → 100 pts' },
-      { icon: '2️⃣', text: '2 lines at once → 300 pts' },
+      { icon: '2️⃣', text: '2 lines at once → 250 pts' },
       { icon: '3️⃣', text: '3 lines at once → 500 pts' },
-      { icon: '4️⃣', text: '4 lines (Blockfall!) → 800 pts' },
-      { icon: '⚡', text: 'Higher levels multiply your score up to 8×' },
+      { icon: '4️⃣', text: '4 lines at once → 800 pts' },
+      { icon: '⚡', text: 'Higher levels multiply your score up to 10×' },
     ],
   },
   {
     icon: '💰',
-    title: 'Weekly Rewards',
+    title: 'Daily Rewards',
     color: COLORS.brightMarine,
     content:
-      "Every week, the top 100 players on the leaderboard share a portion of the protocol's revenue. Rankings reset every Monday — so every week is a fresh shot at the top. The more you play, the more points you earn, and the bigger your share of the prize pool.",
-    highlight: 'Top 100 players · Weekly revenue share · Resets every Monday',
+      "Every day, the top 50 players on the leaderboard share a portion of the protocol's revenue. Rankings reset every day at midnight UTC (00:00) — so every day is a fresh shot at the top. You can claim your rewards on the profile page. The more you play, the more points you earn, and the bigger your share of the prize pool.",
+    highlight: 'Top 50 players · Daily revenue share · Resets every day at 00:00 UTC',
   },
 ];
 
