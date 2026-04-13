@@ -3756,6 +3756,12 @@ declare const app: import("hono/hono-base").HonoBase<import("hono/types").BlankE
                     today_score: number;
                     energy: number;
                 };
+                inventory: {
+                    item_id: string;
+                    item_type: number;
+                    acquisition_type: string;
+                    buy_date: string | null;
+                }[];
             };
             outputFormat: "json";
             status: import("hono/utils/http-status").ContentfulStatusCode;

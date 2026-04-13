@@ -1,24 +1,43 @@
+import { useState, useEffect } from 'react';
 import { COLORS } from '../game/constants';
 import BackButton from '../components/BackButton';
+import { getAuthedApi } from '../api';
 
-const MOCK_PROFILE = {
-  name: 'BlockFall Player',
-  joined: 'April 2026',
-  gamesPlayed: 0,
-  bestScore: 0,
-  totalLines: 0,
-  bestLevel: 1,
-  achievements: [
-    { id: 1, name: 'First Drop', desc: 'Complete your first game', icon: '🎯', unlocked: false },
-    { id: 2, name: 'Line Buster', desc: 'Clear 10 lines in one game', icon: '💥', unlocked: false },
-    { id: 3, name: 'Speed Demon', desc: 'Reach level 5', icon: '⚡', unlocked: false },
-    { id: 4, name: 'Centurion', desc: 'Clear 100 total lines', icon: '🏆', unlocked: false },
-    { id: 5, name: 'High Riser', desc: 'Score over 10,000', icon: '🚀', unlocked: false },
-    { id: 6, name: 'Quad King', desc: 'Clear 4 lines at once', icon: '👑', unlocked: false },
-  ],
+const ITEM_TYPE_LABELS = {
+  5: { name: 'Mystery Box Item', icon: '🎁' },
 };
 
-export default function ProfileScreen({ audio, onToggleMute, onGoHome }) {
+export default function ProfileScreen({ audio, onToggleMute, onGoHome, address }) {
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    async function fetchProfile() {
+      const authedApi = getAuthedApi(address);
+      if (!authedApi) {
+        setError('Not authenticated');
+        setLoading(false);
+        return;
+      }
+      try {
+        const res = await authedApi.user.$get();
+        if (!res.ok) {
+          setError('Failed to load profile');
+          setLoading(false);
+          return;
+        }
+        const data = await res.json();
+        setProfile(data);
+      } catch {
+        setError('Failed to load profile');
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchProfile();
+  }, [address]);
+
   return (
     <div
       style={{
@@ -68,53 +87,85 @@ export default function ProfileScreen({ audio, onToggleMute, onGoHome }) {
         </button>
       </div>
 
-      {/* Avatar + name */}
-      <div style={{ padding: '28px 20px 0', textAlign: 'center' }}>
-        <div
-          style={{
-            width: 88,
-            height: 88,
-            borderRadius: 24,
-            background: `linear-gradient(135deg, ${COLORS.blueGreen}, ${COLORS.deepSpace})`,
-            margin: '0 auto 12px',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 36,
-            boxShadow: `0 8px 24px ${COLORS.blueGreen}55`,
-          }}
-        >
-          🎮
+      {loading && (
+        <div style={{ padding: 40, textAlign: 'center', color: COLORS.deepSpace, opacity: 0.5 }}>
+          Loading...
         </div>
-        <div style={{ fontSize: 22, fontWeight: 800, color: COLORS.deepSpace }}>{MOCK_PROFILE.name}</div>
-        <div style={{ fontSize: 12, color: COLORS.deepSpace, opacity: 0.5, marginTop: 2 }}>
-          Joined {MOCK_PROFILE.joined}
-        </div>
-      </div>
+      )}
 
-      {/* Stats grid */}
-      <div style={{ padding: '24px 16px 0', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-        <StatBlock label="Best Score" value={MOCK_PROFILE.bestScore.toLocaleString() || '—'} color={COLORS.amber} icon="🏅" />
-        <StatBlock label="Best Level" value={MOCK_PROFILE.bestLevel} color={COLORS.orange} icon="⚡" />
-        <StatBlock label="Total Lines" value={MOCK_PROFILE.totalLines} color={COLORS.blueGreen} icon="🧱" />
-        <StatBlock label="Games Played" value={MOCK_PROFILE.gamesPlayed} color={COLORS.deepSpace} icon="🎮" />
-      </div>
+      {error && (
+        <div style={{ padding: 40, textAlign: 'center', color: '#e74c3c' }}>
+          {error}
+        </div>
+      )}
 
-      {/* Achievements */}
-      <div style={{ padding: '24px 16px 0' }}>
-        <div
-          style={{
-            fontSize: 16, fontWeight: 800, color: COLORS.deepSpace,
-            marginBottom: 12,
-            display: 'flex', alignItems: 'center', gap: 8,
-          }}
-        >
-          <span>🏆</span> Achievements
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          {MOCK_PROFILE.achievements.map(a => (
-            <AchievementCard key={a.id} achievement={a} />
-          ))}
-        </div>
-      </div>
+      {profile && (
+        <>
+          {/* Avatar + name */}
+          <div style={{ padding: '28px 20px 0', textAlign: 'center' }}>
+            <div
+              style={{
+                width: 88,
+                height: 88,
+                borderRadius: 24,
+                background: `linear-gradient(135deg, ${COLORS.blueGreen}, ${COLORS.deepSpace})`,
+                margin: '0 auto 12px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 36,
+                boxShadow: `0 8px 24px ${COLORS.blueGreen}55`,
+              }}
+            >
+              🎮
+            </div>
+            <div style={{ fontSize: 22, fontWeight: 800, color: COLORS.deepSpace }}>{profile.name}</div>
+          </div>
+
+          {/* Stats grid */}
+          <div style={{ padding: '24px 16px 0', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <StatBlock label="Today's Score" value={profile.stats.today_score.toLocaleString()} color={COLORS.blueGreen} icon="📅" />
+            <StatBlock label="Total Score" value={Number(profile.stats.total_score).toLocaleString()} color={COLORS.orange} icon="🏅" />
+            <StatBlock label="Best Score" value={profile.stats.best_score.toLocaleString()} color={COLORS.amber} icon="🏆" />
+            <StatBlock label="Games Played" value={profile.stats.games_played} color={COLORS.deepSpace} icon="🎮" />
+          </div>
+
+          {/* Inventory */}
+          <div style={{ padding: '24px 16px 0' }}>
+            <div
+              style={{
+                fontSize: 16, fontWeight: 800, color: COLORS.deepSpace,
+                marginBottom: 12,
+                display: 'flex', alignItems: 'center', gap: 8,
+              }}
+            >
+              <span>🎒</span> Inventory
+            </div>
+            {profile.inventory.length === 0 ? (
+              <div
+                style={{
+                  background: 'white',
+                  borderRadius: 16,
+                  padding: '24px 16px',
+                  textAlign: 'center',
+                  boxShadow: '0 2px 10px rgba(2,48,71,0.06)',
+                  color: COLORS.deepSpace,
+                  opacity: 0.5,
+                  fontSize: 14,
+                }}
+              >
+                No items yet. Buy a Mystery Box from the Shop!
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                {profile.inventory.map(item => (
+                  <InventoryCard key={item.item_id} item={item} />
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div style={{ height: 24 }} />
+        </>
+      )}
     </div>
   );
 }
@@ -141,22 +192,24 @@ function StatBlock({ label, value, color, icon }) {
   );
 }
 
-function AchievementCard({ achievement }) {
+function InventoryCard({ item }) {
+  const info = ITEM_TYPE_LABELS[item.item_type] || { name: `Item #${item.item_type}`, icon: '📦' };
   return (
     <div
       style={{
-        background: achievement.unlocked ? `linear-gradient(135deg, ${COLORS.amber}22, ${COLORS.orange}11)` : 'white',
+        background: `linear-gradient(135deg, ${COLORS.amber}15, ${COLORS.orange}10)`,
         borderRadius: 14,
         padding: '12px 14px',
         boxShadow: '0 2px 8px rgba(2,48,71,0.06)',
-        border: `2px solid ${achievement.unlocked ? COLORS.amber : 'transparent'}`,
-        opacity: achievement.unlocked ? 1 : 0.55,
-        filter: achievement.unlocked ? 'none' : 'grayscale(0.8)',
+        border: `2px solid ${COLORS.amber}33`,
       }}
     >
-      <div style={{ fontSize: 24, marginBottom: 4 }}>{achievement.icon}</div>
-      <div style={{ fontSize: 12, fontWeight: 700, color: COLORS.deepSpace }}>{achievement.name}</div>
-      <div style={{ fontSize: 10, color: COLORS.deepSpace, opacity: 0.5 }}>{achievement.desc}</div>
+      <div style={{ fontSize: 24, marginBottom: 4 }}>{info.icon}</div>
+      <div style={{ fontSize: 12, fontWeight: 700, color: COLORS.deepSpace }}>{info.name}</div>
+      <div style={{ fontSize: 10, color: COLORS.deepSpace, opacity: 0.5 }}>
+        {item.acquisition_type === 'purchase' ? 'Purchased' : item.acquisition_type}
+        {item.buy_date && ` · ${new Date(item.buy_date).toLocaleDateString()}`}
+      </div>
     </div>
   );
 }

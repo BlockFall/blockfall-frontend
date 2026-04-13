@@ -162,7 +162,7 @@ export default function App() {
           <LeaderboardScreen onGoHome={handleGoHome} />
         )}
         {screen === 'profile' && (
-          <ProfileScreen audio={audio} onToggleMute={handleToggleMute} onGoHome={handleGoHome} />
+          <ProfileScreen audio={audio} onToggleMute={handleToggleMute} onGoHome={handleGoHome} address={address} />
         )}
         {screen === 'shop' && (
           <ShopScreen

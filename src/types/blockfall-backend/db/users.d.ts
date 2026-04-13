@@ -16,6 +16,13 @@ export type UserWithNumbersRow = UserRow & {
 export declare function findUserByAddress(address: string): Promise<UserRow | null>;
 export declare function findUserByName(name: string): Promise<UserRow | null>;
 export declare function getUserWithNumbers(address: string): Promise<UserWithNumbersRow | null>;
+export type UserItemRow = {
+    item_id: string;
+    item_type: number;
+    acquisition_type: string;
+    buy_date: Date | null;
+};
+export declare function getUserInventory(userId: string): Promise<UserItemRow[]>;
 /**
  * Creates a user + user_numbers (with initial energy) + energy_issuance record
  * in a single transaction. Throws postgres error '23505' on duplicate address/name.
