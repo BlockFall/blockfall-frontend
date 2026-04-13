@@ -15,8 +15,8 @@ export declare function findUserByAddress(address: string): Promise<UserRow | nu
 export declare function findUserByName(name: string): Promise<UserRow | null>;
 export declare function getUserWithNumbers(address: string): Promise<UserWithNumbersRow | null>;
 /**
- * Creates a user + their user_numbers row atomically.
- * Throws a postgres error with code '23505' on duplicate address or name.
+ * Creates a user + user_numbers (with initial energy) + energy_issuance record
+ * in a single transaction. Throws postgres error '23505' on duplicate address/name.
  */
 export declare function createUser(address: string, name: string): Promise<UserRow>;
 //# sourceMappingURL=users.d.ts.map
