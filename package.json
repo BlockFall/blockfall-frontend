@@ -7,10 +7,12 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "types:sync": "rsync -a --delete ../blockfall-backend/dist/types/ ./src/types/blockfall-backend/"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.96.2",
+    "hono": "^4.12.12",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "viem": "^2.47.10",
