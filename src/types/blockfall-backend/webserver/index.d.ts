@@ -3753,6 +3753,7 @@ declare const app: import("hono/hono-base").HonoBase<import("hono/types").BlankE
                     last_score: number;
                     games_played: number;
                     total_score: string;
+                    today_score: number;
                     energy: number;
                 };
             };

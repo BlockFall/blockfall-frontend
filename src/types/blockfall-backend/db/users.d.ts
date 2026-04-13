@@ -10,6 +10,7 @@ export type UserWithNumbersRow = UserRow & {
     last_score: number;
     games_played: number;
     total_score: string;
+    today_score: number;
     energy: number;
 };
 export declare function findUserByAddress(address: string): Promise<UserRow | null>;
