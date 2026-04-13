@@ -2,9 +2,35 @@ import { useRef, useEffect, useState } from 'react';
 import { useAccount } from 'wagmi';
 import Logo from '../components/Logo';
 import AnimatedBlocks from '../components/AnimatedBlocks';
+import SignUpModal from '../components/SignUpModal';
 import { COLORS } from '../game/constants';
 
-const FLOAT_BUTTONS = [
+const FLOAT_BUTTONS_ALWAYS = [
+  {
+    id: 'leaderboard',
+    label: 'Ranks',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+        <rect x="2" y="11" width="5" height="10" rx="1" fill={COLORS.amber} />
+        <rect x="9.5" y="6" width="5" height="15" rx="1" fill={COLORS.amber} />
+        <rect x="17" y="3" width="5" height="18" rx="1" fill={COLORS.amber} />
+      </svg>
+    ),
+  },
+  {
+    id: 'helpguide',
+    label: 'Help',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="10" fill={COLORS.deepSpace} />
+        <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" stroke="white" strokeWidth="2" strokeLinecap="round" />
+        <circle cx="12" cy="17" r="1" fill="white" />
+      </svg>
+    ),
+  },
+];
+
+const FLOAT_BUTTONS_AUTHED = [
   {
     id: 'leaderboard',
     label: 'Ranks',
@@ -66,9 +92,23 @@ function shortenAddress(addr) {
   return addr.slice(0, 6) + '...' + addr.slice(-4);
 }
 
-export default function HomeScreen({ onPlay, onConnectWallet, isConnected, audio, energy, onNavigate }) {
+export default function HomeScreen({
+  onPlay,
+  onConnectWallet,
+  isConnected,
+  audio,
+  energy,
+  onNavigate,
+  authStatus,
+  user,
+  authError,
+  onSignIn,
+  onSignUp,
+  checkName,
+}) {
   const containerRef = useRef(null);
   const [size, setSize] = useState({ width: 600, height: 700 });
+  const [showSignUpModal, setShowSignUpModal] = useState(false);
   const { address } = useAccount();
 
   useEffect(() => {
@@ -84,6 +124,17 @@ export default function HomeScreen({ onPlay, onConnectWallet, isConnected, audio
   }, []);
 
   const noEnergy = energy <= 0;
+  const isSignedIn = authStatus === 'signed_in';
+  const isRegistered = authStatus === 'registered';
+  const isNotRegistered = authStatus === 'not_registered';
+  const isLoading = authStatus === 'loading';
+
+  const floatButtons = isSignedIn ? FLOAT_BUTTONS_AUTHED : FLOAT_BUTTONS_ALWAYS;
+
+  async function handleSignUpSubmit(name) {
+    await onSignUp(name);
+    setShowSignUpModal(false);
+  }
 
   return (
     <div
@@ -101,7 +152,7 @@ export default function HomeScreen({ onPlay, onConnectWallet, isConnected, audio
     >
       <AnimatedBlocks width={size.width} height={size.height} />
 
-      {/* Energy indicator — top left */}
+      {/* Energy indicator — top left (only when signed in) */}
       <div
         style={{
           position: 'absolute',
@@ -113,42 +164,44 @@ export default function HomeScreen({ onPlay, onConnectWallet, isConnected, audio
           gap: 8,
         }}
       >
-        <div
-          style={{
-            background: 'white',
-            borderRadius: 14,
-            padding: '8px 14px',
-            boxShadow: '0 4px 16px rgba(2,48,71,0.10)',
-            border: `2px solid ${noEnergy ? '#ef4444' : COLORS.amber}33`,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-          }}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill={noEnergy ? '#ef4444' : COLORS.amber}>
-            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-          </svg>
-          <span
+        {isSignedIn && (
+          <div
             style={{
-              fontSize: 14,
-              fontWeight: 800,
-              color: noEnergy ? '#ef4444' : COLORS.deepSpace,
-              letterSpacing: 0.5,
+              background: 'white',
+              borderRadius: 14,
+              padding: '8px 14px',
+              boxShadow: '0 4px 16px rgba(2,48,71,0.10)',
+              border: `2px solid ${noEnergy ? '#ef4444' : COLORS.amber}33`,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
             }}
           >
-            {energy} / 10
-          </span>
-          <span
-            style={{
-              fontSize: 10,
-              fontWeight: 600,
-              color: noEnergy ? '#ef4444' : COLORS.deepSpace,
-              opacity: 0.5,
-            }}
-          >
-            energy
-          </span>
-        </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill={noEnergy ? '#ef4444' : COLORS.amber}>
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+            </svg>
+            <span
+              style={{
+                fontSize: 14,
+                fontWeight: 800,
+                color: noEnergy ? '#ef4444' : COLORS.deepSpace,
+                letterSpacing: 0.5,
+              }}
+            >
+              {energy} / 10
+            </span>
+            <span
+              style={{
+                fontSize: 10,
+                fontWeight: 600,
+                color: noEnergy ? '#ef4444' : COLORS.deepSpace,
+                opacity: 0.5,
+              }}
+            >
+              energy
+            </span>
+          </div>
+        )}
 
         {/* Wallet address badge */}
         {isConnected && address && (
@@ -200,7 +253,7 @@ export default function HomeScreen({ onPlay, onConnectWallet, isConnected, audio
           gap: 8,
         }}
       >
-        {FLOAT_BUTTONS.map(btn => (
+        {floatButtons.map(btn => (
           <button
             key={btn.id}
             onClick={() => onNavigate(btn.id)}
@@ -242,8 +295,50 @@ export default function HomeScreen({ onPlay, onConnectWallet, isConnected, audio
           Stack, clear, survive.
         </p>
 
-        {isConnected ? (
-          /* Play button */
+        {/* CTA based on auth state */}
+        {isLoading ? (
+          <div style={{
+            padding: '18px 64px',
+            fontSize: 16,
+            fontWeight: 700,
+            color: COLORS.deepSpace,
+            opacity: 0.5,
+            marginBottom: 32,
+          }}>
+            Loading...
+          </div>
+        ) : !isConnected ? (
+          /* Wallet not connected */
+          <button
+            onClick={onConnectWallet}
+            style={{
+              background: `linear-gradient(135deg, ${COLORS.blueGreen}, #0ea5e9)`,
+              color: 'white',
+              border: 'none',
+              borderRadius: 24,
+              padding: '18px 48px',
+              fontSize: 18,
+              fontWeight: 900,
+              cursor: 'pointer',
+              letterSpacing: 1,
+              boxShadow: `0 8px 32px ${COLORS.blueGreen}66`,
+              position: 'relative',
+              overflow: 'hidden',
+              marginBottom: 32,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+            }}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <rect x="2" y="6" width="20" height="14" rx="3" stroke="white" strokeWidth="2" />
+              <path d="M16 13a1 1 0 1 0 2 0 1 1 0 0 0-2 0z" fill="white" />
+              <path d="M2 10h20" stroke="white" strokeWidth="2" />
+            </svg>
+            Connect Wallet
+          </button>
+        ) : isSignedIn ? (
+          /* Signed in — Play button */
           <button
             onClick={onPlay}
             style={{
@@ -274,16 +369,16 @@ export default function HomeScreen({ onPlay, onConnectWallet, isConnected, audio
               animation: 'shine 2.5s ease-in-out infinite',
             }} />
           </button>
-        ) : (
-          /* Connect Wallet button */
+        ) : isRegistered ? (
+          /* Registered but not signed in */
           <button
-            onClick={onConnectWallet}
+            onClick={onSignIn}
             style={{
               background: `linear-gradient(135deg, ${COLORS.blueGreen}, #0ea5e9)`,
               color: 'white',
               border: 'none',
               borderRadius: 24,
-              padding: '18px 48px',
+              padding: '18px 56px',
               fontSize: 18,
               fontWeight: 900,
               cursor: 'pointer',
@@ -298,20 +393,91 @@ export default function HomeScreen({ onPlay, onConnectWallet, isConnected, audio
             }}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <rect x="2" y="6" width="20" height="14" rx="3" stroke="white" strokeWidth="2" />
-              <path d="M16 13a1 1 0 1 0 2 0 1 1 0 0 0-2 0z" fill="white" />
-              <path d="M2 10h20" stroke="white" strokeWidth="2" />
+              <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4" stroke="white" strokeWidth="2" strokeLinecap="round" />
+              <path d="M10 17l5-5-5-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <line x1="15" y1="12" x2="3" y2="12" stroke="white" strokeWidth="2" strokeLinecap="round" />
             </svg>
-            Connect Wallet
+            Sign In
           </button>
+        ) : isNotRegistered ? (
+          /* Not registered */
+          <button
+            onClick={() => setShowSignUpModal(true)}
+            style={{
+              background: `linear-gradient(135deg, ${COLORS.orange}, ${COLORS.amber})`,
+              color: 'white',
+              border: 'none',
+              borderRadius: 24,
+              padding: '18px 56px',
+              fontSize: 18,
+              fontWeight: 900,
+              cursor: 'pointer',
+              letterSpacing: 1,
+              boxShadow: `0 8px 32px ${COLORS.orange}66`,
+              position: 'relative',
+              overflow: 'hidden',
+              marginBottom: 32,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+            }}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="8" r="4" stroke="white" strokeWidth="2" />
+              <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="white" strokeWidth="2" strokeLinecap="round" />
+              <path d="M20 8v6M17 11h6" stroke="white" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+            Sign Up
+          </button>
+        ) : null}
+
+        {/* Auth error message */}
+        {authError && (
+          <div style={{
+            background: '#fef2f2',
+            border: '1px solid #fecaca',
+            borderRadius: 12,
+            padding: '8px 16px',
+            marginBottom: 16,
+            fontSize: 13,
+            fontWeight: 600,
+            color: '#dc2626',
+            maxWidth: 300,
+            textAlign: 'center',
+          }}>
+            {authError}
+          </div>
         )}
 
-        {/* Stat cards */}
-        <div style={{ display: 'flex', gap: 12 }}>
-          <StatCard label="Best Score" value="—" color={COLORS.amber} />
-          <StatCard label="Games Played" value="0" color={COLORS.blueGreen} />
-        </div>
+        {/* Stat cards — only when signed in */}
+        {isSignedIn && user && (
+          <div style={{ display: 'flex', gap: 12 }}>
+            <StatCard label="Best Score" value={user.stats?.best_score || '—'} color={COLORS.amber} />
+            <StatCard label="Games Played" value={user.stats?.energy != null ? String(10 - user.stats.energy) : '0'} color={COLORS.blueGreen} />
+          </div>
+        )}
+
+        {/* Welcome message for signed-in users */}
+        {isSignedIn && user?.name && (
+          <div style={{
+            marginTop: 16,
+            fontSize: 13,
+            fontWeight: 700,
+            color: COLORS.deepSpace,
+            opacity: 0.6,
+          }}>
+            Welcome back, {user.name}!
+          </div>
+        )}
       </div>
+
+      {showSignUpModal && (
+        <SignUpModal
+          onSubmit={handleSignUpSubmit}
+          onClose={() => setShowSignUpModal(false)}
+          checkName={checkName}
+        />
+      )}
 
       <style>{`
         @keyframes logoFloat {

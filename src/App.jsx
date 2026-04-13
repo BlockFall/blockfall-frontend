@@ -10,6 +10,7 @@ import DailyCheckinScreen from './screens/DailyCheckinScreen';
 import HelpGuideScreen from './screens/HelpGuideScreen';
 import { useAudio } from './audio/useAudio';
 import { usePlayGame } from './hooks/usePlayGame';
+import { useAuth } from './hooks/useAuth';
 import { TxOverlay, Toast } from './components/TxOverlay';
 
 function getEnergy() {
@@ -32,6 +33,7 @@ export default function App() {
   const { connect } = useConnect();
   const { reconnect } = useReconnect();
   const { startPlay, txStatus, resetTxStatus } = usePlayGame();
+  const { authStatus, user, authError, signIn, signUp, signOut, checkName } = useAuth();
 
   // Auto-connect if window.ethereum is present (MiniPay or any injected wallet)
   useEffect(() => {
@@ -124,6 +126,12 @@ export default function App() {
             audio={audio}
             energy={energy}
             onNavigate={setScreen}
+            authStatus={authStatus}
+            user={user}
+            authError={authError}
+            onSignIn={signIn}
+            onSignUp={signUp}
+            checkName={checkName}
           />
         )}
         {screen === 'game' && (
