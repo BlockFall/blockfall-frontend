@@ -11,21 +11,12 @@ import HelpGuideScreen from './screens/HelpGuideScreen';
 import { useAudio } from './audio/useAudio';
 import { usePlayGame } from './hooks/usePlayGame';
 import { useAuth } from './hooks/useAuth';
+import { getAuthedApi } from './api';
 import { TxOverlay, Toast } from './components/TxOverlay';
-
-function getEnergy() {
-  const stored = localStorage.getItem('blockfall_energy');
-  if (stored === null) return 10;
-  return parseInt(stored, 10);
-}
-
-function saveEnergy(value) {
-  localStorage.setItem('blockfall_energy', String(value));
-}
 
 export default function App() {
   const [screen, setScreen] = useState('home');
-  const [energy, setEnergy] = useState(getEnergy);
+  const [gamePlayId, setGamePlayId] = useState(null);
   const [showRejectedToast, setShowRejectedToast] = useState(false);
   const audio = useAudio();
 
@@ -33,8 +24,10 @@ export default function App() {
   const prevAddressRef = useRef(address);
   const { connect } = useConnect();
   const { reconnect } = useReconnect();
-  const { startPlay, txStatus, resetTxStatus } = usePlayGame();
-  const { authStatus, user, authError, signIn, signUp, signOut, checkName } = useAuth();
+  const { startPlay, buyItem, txStatus, resetTxStatus, balanceError, resetBalanceError } = usePlayGame();
+  const { authStatus, user, authError, signIn, signUp, signOut, checkName, refreshUser } = useAuth();
+
+  const energy = user?.stats?.energy ?? 0;
 
   // Auto-connect if window.ethereum is present (MiniPay or any injected wallet)
   useEffect(() => {
@@ -55,27 +48,46 @@ export default function App() {
     connect({ connector: injected() });
   }, [connect]);
 
+  const callGameStart = useCallback(async () => {
+    const authedApi = getAuthedApi(address);
+    if (!authedApi) return null;
+    const res = await authedApi.game.start.$post();
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.game_play_id;
+  }, [address]);
+
   const handlePlay = useCallback(async () => {
     audio.initAudio();
 
     if (energy > 0) {
-      const next = energy - 1;
-      setEnergy(next);
-      saveEnergy(next);
-      setScreen('game');
+      const playId = await callGameStart();
+      if (playId) {
+        setGamePlayId(playId);
+        setScreen('game');
+      }
       return;
     }
 
     // energy === 0: buy a session from the contract
     const success = await startPlay();
     if (success) {
-      setScreen('game');
+      // Refresh user to get updated energy after purchase
+      const updatedUser = await refreshUser();
+      if (updatedUser?.stats?.energy > 0) {
+        const playId = await callGameStart();
+        if (playId) {
+          setGamePlayId(playId);
+          setScreen('game');
+        }
+      }
     }
-  }, [energy, audio, startPlay]);
+  }, [energy, audio, startPlay, callGameStart, refreshUser]);
 
   const handleExitGame = useCallback(() => {
     setScreen('home');
-  }, []);
+    refreshUser();
+  }, [refreshUser]);
 
   const handleToggleMute = useCallback(() => {
     audio.toggleMute();
@@ -85,11 +97,9 @@ export default function App() {
     setScreen('home');
   }, []);
 
-  const handleAddEnergy = useCallback((amount) => {
-    const next = energy + amount;
-    setEnergy(next);
-    saveEnergy(next);
-  }, [energy]);
+  const handleAddEnergy = useCallback(() => {
+    refreshUser();
+  }, [refreshUser]);
 
   // When tx is rejected, close overlay and show toast
   const handleCloseTxOverlay = useCallback(() => {
@@ -141,10 +151,12 @@ export default function App() {
             onSignIn={signIn}
             onSignUp={signUp}
             checkName={checkName}
+            balanceError={balanceError}
+            resetBalanceError={resetBalanceError}
           />
         )}
         {screen === 'game' && (
-          <GameScreen onExit={handleExitGame} audio={audio} />
+          <GameScreen onExit={handleExitGame} audio={audio} gamePlayId={gamePlayId} address={address} />
         )}
         {screen === 'leaderboard' && (
           <LeaderboardScreen onGoHome={handleGoHome} />
@@ -153,7 +165,13 @@ export default function App() {
           <ProfileScreen audio={audio} onToggleMute={handleToggleMute} onGoHome={handleGoHome} />
         )}
         {screen === 'shop' && (
-          <ShopScreen onGoHome={handleGoHome} onAddEnergy={handleAddEnergy} />
+          <ShopScreen
+            onGoHome={handleGoHome}
+            onAddEnergy={handleAddEnergy}
+            buyItem={buyItem}
+            balanceError={balanceError}
+            resetBalanceError={resetBalanceError}
+          />
         )}
         {screen === 'checkin' && (
           <DailyCheckinScreen onGoHome={handleGoHome} onAddEnergy={handleAddEnergy} />

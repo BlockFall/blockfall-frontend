@@ -105,6 +105,8 @@ export default function HomeScreen({
   onSignIn,
   onSignUp,
   checkName,
+  balanceError,
+  resetBalanceError,
 }) {
   const containerRef = useRef(null);
   const [size, setSize] = useState({ width: 600, height: 700 });
@@ -449,11 +451,47 @@ export default function HomeScreen({
           </div>
         )}
 
+        {/* Balance error message */}
+        {balanceError && (
+          <div style={{
+            background: '#fffbeb',
+            border: '1px solid #fde68a',
+            borderRadius: 12,
+            padding: '8px 16px',
+            marginBottom: 16,
+            fontSize: 13,
+            fontWeight: 600,
+            color: '#d97706',
+            maxWidth: 300,
+            textAlign: 'center',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+          }}>
+            <span style={{ flex: 1 }}>{balanceError}</span>
+            <button
+              onClick={resetBalanceError}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: 0,
+                fontSize: 16,
+                color: '#d97706',
+                fontWeight: 700,
+                lineHeight: 1,
+              }}
+            >
+              &times;
+            </button>
+          </div>
+        )}
+
         {/* Stat cards — only when signed in */}
         {isSignedIn && user && (
           <div style={{ display: 'flex', gap: 12 }}>
             <StatCard label="Best Score" value={user.stats?.best_score || '—'} color={COLORS.amber} />
-            <StatCard label="Games Played" value={user.stats?.energy != null ? String(10 - user.stats.energy) : '0'} color={COLORS.blueGreen} />
+            <StatCard label="Games Played" value={user.stats?.games_played ?? 0} color={COLORS.blueGreen} />
           </div>
         )}
 

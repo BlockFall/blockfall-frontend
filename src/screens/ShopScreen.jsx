@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { COLORS } from '../game/constants';
 import BackButton from '../components/BackButton';
 
 const SHOP_ITEMS = [
   {
     id: 'energy10',
+    itemTypeId: 2,
     icon: '⚡',
     name: '10 Energy',
     desc: 'Refill 10 plays instantly',
@@ -13,6 +15,7 @@ const SHOP_ITEMS = [
   },
   {
     id: 'energy25',
+    itemTypeId: 3,
     icon: '⚡',
     name: '25 Energy',
     desc: 'Best value for regular players',
@@ -23,6 +26,7 @@ const SHOP_ITEMS = [
   },
   {
     id: 'energy50',
+    itemTypeId: 4,
     icon: '⚡',
     name: '50 Energy',
     desc: 'Stock up and play all day',
@@ -33,6 +37,7 @@ const SHOP_ITEMS = [
   },
   {
     id: 'mysterybox',
+    itemTypeId: 5,
     icon: '🎁',
     name: 'Mystery Box',
     desc: 'Random energy + exclusive rewards',
@@ -42,7 +47,20 @@ const SHOP_ITEMS = [
   },
 ];
 
-export default function ShopScreen({ onGoHome }) {
+export default function ShopScreen({ onGoHome, onAddEnergy, buyItem, balanceError, resetBalanceError }) {
+  const [buyingId, setBuyingId] = useState(null);
+
+  async function handleBuy(item) {
+    if (buyingId) return;
+    resetBalanceError();
+    setBuyingId(item.id);
+    const success = await buyItem(item.itemTypeId);
+    setBuyingId(null);
+    if (success) {
+      onAddEnergy();
+    }
+  }
+
   return (
     <div
       style={{
@@ -68,37 +86,44 @@ export default function ShopScreen({ onGoHome }) {
         <span style={{ fontSize: 18, fontWeight: 800, color: COLORS.deepSpace }}>Shop</span>
       </div>
 
-      {/* Blockchain note */}
-      <div
-        style={{
-          margin: '16px 16px 4px',
-          background: `${COLORS.brightMarine}18`,
-          border: `1.5px solid ${COLORS.brightMarine}44`,
-          borderRadius: 12,
-          padding: '10px 14px',
-          fontSize: 12,
-          color: COLORS.deepSpace,
-          fontWeight: 600,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-        }}
-      >
-        <span style={{ fontSize: 16 }}>⛓️</span>
-        Blockchain payments coming soon — items shown for preview
-      </div>
+      {/* Balance error */}
+      {balanceError && (
+        <div
+          style={{
+            margin: '16px 16px 4px',
+            background: '#fee2e2',
+            border: '1.5px solid #fca5a5',
+            borderRadius: 12,
+            padding: '10px 14px',
+            fontSize: 12,
+            color: '#991b1b',
+            fontWeight: 600,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+          }}
+        >
+          {balanceError}
+        </div>
+      )}
 
       {/* Items */}
       <div style={{ padding: '12px 16px 24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
         {SHOP_ITEMS.map(item => (
-          <ShopItemCard key={item.id} item={item} />
+          <ShopItemCard
+            key={item.id}
+            item={item}
+            buying={buyingId === item.id}
+            disabled={!!buyingId}
+            onBuy={() => handleBuy(item)}
+          />
         ))}
       </div>
     </div>
   );
 }
 
-function ShopItemCard({ item }) {
+function ShopItemCard({ item, buying, disabled, onBuy }) {
   return (
     <div
       style={{
@@ -172,7 +197,8 @@ function ShopItemCard({ item }) {
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0 }}>
         <div style={{ fontSize: 18, fontWeight: 900, color: item.color }}>{item.price}</div>
         <button
-          disabled
+          onClick={onBuy}
+          disabled={disabled}
           style={{
             background: `linear-gradient(135deg, ${item.color}, ${item.color}bb)`,
             color: 'white',
@@ -181,12 +207,12 @@ function ShopItemCard({ item }) {
             padding: '6px 14px',
             fontSize: 11,
             fontWeight: 700,
-            cursor: 'not-allowed',
-            opacity: 0.65,
+            cursor: disabled ? 'not-allowed' : 'pointer',
+            opacity: disabled ? 0.65 : 1,
             letterSpacing: 0.3,
           }}
         >
-          Coming Soon
+          {buying ? 'Buying...' : 'Buy'}
         </button>
       </div>
     </div>

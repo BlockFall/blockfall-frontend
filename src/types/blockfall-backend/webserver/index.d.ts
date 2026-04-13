@@ -3751,6 +3751,7 @@ declare const app: import("hono/hono-base").HonoBase<import("hono/types").BlankE
                 stats: {
                     best_score: number;
                     last_score: number;
+                    games_played: number;
                     total_score: string;
                     energy: number;
                 };

@@ -7,6 +7,7 @@ import {
   placePiece, clearLines, getDropPosition, isGameOver,
 } from '../game/engine';
 import { useParticles, ParticleCanvas, RowFlash } from '../effects/ParticleSystem';
+import { getAuthedApi } from '../api';
 
 function roundRect(ctx, x, y, w, h, r) {
   ctx.beginPath();
@@ -34,7 +35,7 @@ function drawCell(ctx, x, y, cell, color, alpha = 1) {
   ctx.restore();
 }
 
-export default function GameScreen({ onExit, audio }) {
+export default function GameScreen({ onExit, audio, gamePlayId, address }) {
   const canvasRef = useRef(null);
   const areaRef   = useRef(null);   // canvas container — measured for sizing
   const cellRef   = useRef(28);     // current cell size, used by all game functions
@@ -188,10 +189,19 @@ export default function GameScreen({ onExit, audio }) {
       state.board     = clearedBoard;
       state.piece     = null;
       state.gameOver  = true;
+      const finalScore = state.score + scored;
       drawBoard();
-      setUiState(u => ({ ...u, gameOver: true }));
+      setUiState(u => ({ ...u, gameOver: true, score: finalScore }));
       audio.stopMusic();
       audio.playGameOver();
+
+      // Report game end to backend
+      if (gamePlayId && address) {
+        const authedApi = getAuthedApi(address);
+        if (authedApi) {
+          authedApi.game.end.$post({ json: { game_play_id: gamePlayId, score: finalScore } }).catch(() => {});
+        }
+      }
       return;
     }
 

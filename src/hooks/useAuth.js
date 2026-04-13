@@ -183,5 +183,20 @@ export function useAuth() {
     }
   }, [])
 
-  return { authStatus, user, authError, signIn, signUp, signOut, checkName }
+  const refreshUser = useCallback(async () => {
+    if (!address) return null
+    const authedApi = getAuthedApi(address)
+    if (!authedApi) return null
+    try {
+      const res = await authedApi.user.$get()
+      if (res.ok) {
+        const data = await res.json()
+        setUser(data)
+        return data
+      }
+    } catch {}
+    return null
+  }, [address])
+
+  return { authStatus, user, authError, signIn, signUp, signOut, checkName, refreshUser }
 }

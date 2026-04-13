@@ -8,6 +8,7 @@ export type UserRow = {
 export type UserWithNumbersRow = UserRow & {
     best_score: number;
     last_score: number;
+    games_played: number;
     total_score: string;
     energy: number;
 };

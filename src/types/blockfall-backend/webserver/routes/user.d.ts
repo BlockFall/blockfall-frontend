@@ -23,6 +23,7 @@ export declare const userRoutes: import("hono/hono-base").HonoBase<AuthEnv, {
                 stats: {
                     best_score: number;
                     last_score: number;
+                    games_played: number;
                     total_score: string;
                     energy: number;
                 };
