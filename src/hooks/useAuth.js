@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAccount, useWalletClient } from 'wagmi'
-import { api, getAuthedApi } from '../api.js'
+import { api, getAuthedApi, tokenKey } from '../api.js'
 
 // authStatus: 'loading' | 'no_wallet' | 'signed_in' | 'registered' | 'not_registered'
 // - loading: checking wallet/token state
@@ -30,11 +30,11 @@ export function useAuth() {
       setAuthStatus('loading')
       setAuthError(null)
 
-      // First, try existing token
-      const token = localStorage.getItem('blockfall_token')
+      // First, try existing token for this address
+      const token = localStorage.getItem(tokenKey(address))
       if (token) {
         try {
-          const authedApi = getAuthedApi()
+          const authedApi = getAuthedApi(address)
           const res = await authedApi.user.$get()
           if (res.ok) {
             const data = await res.json()
@@ -48,7 +48,7 @@ export function useAuth() {
           // Token invalid, continue to check registration
         }
         // Token invalid — remove it
-        localStorage.removeItem('blockfall_token')
+        localStorage.removeItem(tokenKey(address))
       }
 
       // No valid token — check if address is registered
@@ -108,8 +108,8 @@ export function useAuth() {
       const { token } = await verifyRes.json()
 
       // 5. Store and fetch user
-      localStorage.setItem('blockfall_token', token)
-      const authedApi = getAuthedApi()
+      localStorage.setItem(tokenKey(address), token)
+      const authedApi = getAuthedApi(address)
       const userRes = await authedApi.user.$get()
       const userData = await userRes.json()
 
@@ -155,8 +155,8 @@ export function useAuth() {
       const { token } = await signupRes.json()
 
       // 5. Store and fetch user
-      localStorage.setItem('blockfall_token', token)
-      const authedApi = getAuthedApi()
+      localStorage.setItem(tokenKey(address), token)
+      const authedApi = getAuthedApi(address)
       const userRes = await authedApi.user.$get()
       const userData = await userRes.json()
 
@@ -168,10 +168,10 @@ export function useAuth() {
   }, [walletClient, address])
 
   const signOut = useCallback(() => {
-    localStorage.removeItem('blockfall_token')
+    if (address) localStorage.removeItem(tokenKey(address))
     setUser(null)
     setAuthStatus(isConnected ? 'registered' : 'no_wallet')
-  }, [isConnected])
+  }, [isConnected, address])
 
   const checkName = useCallback(async (name) => {
     try {

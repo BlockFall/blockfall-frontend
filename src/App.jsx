@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useAccount, useConnect, useReconnect } from 'wagmi';
 import { injected } from 'wagmi/connectors';
 import HomeScreen from './screens/HomeScreen';
@@ -29,7 +29,8 @@ export default function App() {
   const [showRejectedToast, setShowRejectedToast] = useState(false);
   const audio = useAudio();
 
-  const { isConnected } = useAccount();
+  const { isConnected, address } = useAccount();
+  const prevAddressRef = useRef(address);
   const { connect } = useConnect();
   const { reconnect } = useReconnect();
   const { startPlay, txStatus, resetTxStatus } = usePlayGame();
@@ -41,6 +42,14 @@ export default function App() {
       reconnect();
     }
   }, [reconnect]);
+
+  // When wallet address changes, redirect to home
+  useEffect(() => {
+    if (prevAddressRef.current && address && prevAddressRef.current !== address) {
+      setScreen('home');
+    }
+    prevAddressRef.current = address;
+  }, [address]);
 
   const handleConnectWallet = useCallback(() => {
     connect({ connector: injected() });
