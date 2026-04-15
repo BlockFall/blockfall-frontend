@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { useAccount, useConnect, useReconnect } from 'wagmi';
-import { injected } from 'wagmi/connectors';
+import { useAccount, useReconnect } from 'wagmi';
+import { modal } from './wagmi';
 import HomeScreen from './screens/HomeScreen';
 import GameScreen from './screens/GameScreen';
 import LeaderboardScreen from './screens/LeaderboardScreen';
@@ -22,7 +22,6 @@ export default function App() {
 
   const { isConnected, address } = useAccount();
   const prevAddressRef = useRef(address);
-  const { connect } = useConnect();
   const { reconnect } = useReconnect();
   const { startPlay, buyItem, txStatus, resetTxStatus, balanceError, resetBalanceError } = usePlayGame();
   const { authStatus, user, authError, signIn, signUp, signOut, checkName, refreshUser } = useAuth();
@@ -45,8 +44,8 @@ export default function App() {
   }, [address]);
 
   const handleConnectWallet = useCallback(() => {
-    connect({ connector: injected() });
-  }, [connect]);
+    modal.open();
+  }, []);
 
   const callGameStart = useCallback(async () => {
     const authedApi = getAuthedApi(address);

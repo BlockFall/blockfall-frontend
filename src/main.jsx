@@ -6,6 +6,9 @@ import './index.css'
 import App from './App.jsx'
 import { config } from './wagmi.js'
 
+// Import wagmi.js to initialize AppKit (side-effect)
+import './wagmi.js'
+
 const queryClient = new QueryClient()
 
 createRoot(document.getElementById('root')).render(
