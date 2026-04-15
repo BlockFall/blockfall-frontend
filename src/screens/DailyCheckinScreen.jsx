@@ -1,69 +1,126 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useAccount } from 'wagmi';
 import { COLORS } from '../game/constants';
 import BackButton from '../components/BackButton';
+import { getAuthedApi } from '../api';
 
-const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const CYCLE_LENGTH = 7;
 
-function todayISO() {
+function todayUTCISO() {
   return new Date().toISOString().slice(0, 10);
 }
 
-function getCheckins() {
-  try {
-    return JSON.parse(localStorage.getItem('blockfall_checkins') || '[]');
-  } catch {
-    return [];
-  }
+function addDaysUTC(isoDate, delta) {
+  const d = new Date(`${isoDate}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + delta);
+  return d.toISOString().slice(0, 10);
 }
 
-function saveCheckins(dates) {
-  localStorage.setItem('blockfall_checkins', JSON.stringify(dates));
-}
-
-// Returns the ISO date strings for Mon–Sun of the current week
-function getCurrentWeekDays() {
-  const now = new Date();
-  // getDay(): 0=Sun,1=Mon,...,6=Sat
-  const dayOfWeek = now.getDay();
-  const monday = new Date(now);
-  monday.setDate(now.getDate() - ((dayOfWeek + 6) % 7));
-  return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(monday);
-    d.setDate(monday.getDate() + i);
-    return d.toISOString().slice(0, 10);
-  });
-}
-
-// Compute consecutive streak ending today (or yesterday)
-function computeStreak(checkins) {
-  if (!checkins.length) return 0;
-  const set = new Set(checkins);
+// Walk back from today (or yesterday if today missing) to count consecutive check-ins.
+function computeStreak(checkinSet, today) {
+  let cursor = today;
+  if (!checkinSet.has(cursor)) cursor = addDaysUTC(cursor, -1);
   let streak = 0;
-  const cursor = new Date();
-  // Allow streak to count if today is checked in, else start from yesterday
-  if (!set.has(todayISO())) cursor.setDate(cursor.getDate() - 1);
-  while (set.has(cursor.toISOString().slice(0, 10))) {
+  while (checkinSet.has(cursor)) {
     streak++;
-    cursor.setDate(cursor.getDate() - 1);
+    cursor = addDaysUTC(cursor, -1);
   }
   return streak;
 }
 
+// Build the 7-slot cycle ending at/including today, based on current streak progress.
+function buildCycle(checkinSet, today) {
+  const todayChecked = checkinSet.has(today);
+  const streak = computeStreak(checkinSet, today);
+  // position of "today" within the current 7-day cycle (1..7)
+  const positionToday = todayChecked
+    ? ((streak - 1) % CYCLE_LENGTH) + 1
+    : (streak % CYCLE_LENGTH) + 1;
+  const cycleStart = addDaysUTC(today, -(positionToday - 1));
+  const days = Array.from({ length: CYCLE_LENGTH }, (_, i) => {
+    const date = addDaysUTC(cycleStart, i);
+    return {
+      date,
+      checked: checkinSet.has(date),
+      isToday: date === today,
+      isPast: date < today,
+    };
+  });
+  return { days, streak, positionToday };
+}
+
 export default function DailyCheckinScreen({ onGoHome, onAddEnergy }) {
-  const [checkins, setCheckins] = useState(getCheckins);
+  const { address } = useAccount();
+  const [days, setDays] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+  const [rewardMsg, setRewardMsg] = useState(null);
 
-  const today = todayISO();
-  const weekDays = getCurrentWeekDays();
-  const checkinSet = new Set(checkins);
+  const fetchCheckins = useCallback(async () => {
+    const authedApi = getAuthedApi(address);
+    if (!authedApi) {
+      setError('Not authenticated');
+      setLoading(false);
+      return;
+    }
+    try {
+      const res = await authedApi.checkin.$get();
+      if (!res.ok) {
+        setError('Failed to load check-ins');
+        return;
+      }
+      const data = await res.json();
+      setDays(data.days || []);
+      setError(null);
+    } catch {
+      setError('Failed to load check-ins');
+    } finally {
+      setLoading(false);
+    }
+  }, [address]);
+
+  useEffect(() => {
+    fetchCheckins();
+  }, [fetchCheckins]);
+
+  const today = todayUTCISO();
+  const checkinSet = new Set(days.filter((d) => d.checked_in).map((d) => d.date));
   const alreadyCheckedIn = checkinSet.has(today);
-  const streak = computeStreak(checkins);
+  const { days: cycleDays, streak, positionToday } = buildCycle(checkinSet, today);
 
-  function handleCheckin() {
-    if (alreadyCheckedIn) return;
-    const updated = [...checkins, today];
-    setCheckins(updated);
-    saveCheckins(updated);
-    onAddEnergy(2);
+  async function handleCheckin() {
+    if (alreadyCheckedIn || submitting) return;
+    const authedApi = getAuthedApi(address);
+    if (!authedApi) {
+      setError('Not authenticated');
+      return;
+    }
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await authedApi.checkin.$post();
+      if (!res.ok) {
+        if (res.status === 409) {
+          await fetchCheckins();
+        } else {
+          setError('Check-in failed');
+        }
+        return;
+      }
+      const data = await res.json();
+      if (data.mystery_box_item_id) {
+        setRewardMsg(`🎁 Mystery box unlocked! (+${data.energy_granted} ⚡)`);
+      } else {
+        setRewardMsg(`+${data.energy_granted} ⚡ granted!`);
+      }
+      await fetchCheckins();
+      onAddEnergy?.(data.energy_granted);
+    } catch {
+      setError('Check-in failed');
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -132,7 +189,7 @@ export default function DailyCheckinScreen({ onGoHome, onAddEnergy }) {
           </div>
         </div>
 
-        {/* This week grid */}
+        {/* 7-day cycle grid */}
         <div
           style={{
             background: 'white',
@@ -152,80 +209,75 @@ export default function DailyCheckinScreen({ onGoHome, onAddEnergy }) {
               textTransform: 'uppercase',
             }}
           >
-            This Week
+            7-Day Streak ({positionToday}/{CYCLE_LENGTH})
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6 }}>
-            {weekDays.map((date, i) => {
-              const checked = checkinSet.has(date);
-              const isToday = date === today;
-              const isPast = date < today;
-              return (
+            {cycleDays.map(({ date, checked, isToday, isPast }, i) => (
+              <div
+                key={date}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
                 <div
-                  key={date}
                   style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: 6,
+                    fontSize: 10,
+                    fontWeight: 700,
+                    color: isToday ? COLORS.orange : COLORS.deepSpace,
+                    opacity: isToday ? 1 : 0.5,
+                    letterSpacing: 0.3,
                   }}
                 >
-                  <div
-                    style={{
-                      fontSize: 10,
-                      fontWeight: 700,
-                      color: isToday ? COLORS.orange : COLORS.deepSpace,
-                      opacity: isToday ? 1 : 0.5,
-                      letterSpacing: 0.3,
-                    }}
-                  >
-                    {DAY_LABELS[i]}
-                  </div>
-                  <div
-                    style={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: 10,
-                      background: checked
-                        ? `linear-gradient(135deg, ${COLORS.blueGreen}, ${COLORS.brightMarine})`
-                        : isToday
-                        ? `${COLORS.orange}22`
-                        : isPast
-                        ? `${COLORS.deepSpace}0d`
-                        : `${COLORS.skyBlue}22`,
-                      border: isToday
-                        ? `2px solid ${checked ? COLORS.blueGreen : COLORS.orange}`
-                        : '2px solid transparent',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      boxShadow: checked ? `0 3px 10px ${COLORS.blueGreen}44` : 'none',
-                    }}
-                  >
-                    {checked ? (
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                        <path
-                          d="M5 13l4 4L19 7"
-                          stroke="white"
-                          strokeWidth="2.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    ) : isPast ? (
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                        <path
-                          d="M18 6L6 18M6 6l12 12"
-                          stroke={COLORS.deepSpace}
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeOpacity="0.3"
-                        />
-                      </svg>
-                    ) : null}
-                  </div>
+                  {`Day ${i + 1}`}
                 </div>
-              );
-            })}
+                <div
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 10,
+                    background: checked
+                      ? `linear-gradient(135deg, ${COLORS.blueGreen}, ${COLORS.brightMarine})`
+                      : isToday
+                      ? `${COLORS.orange}22`
+                      : isPast
+                      ? `${COLORS.deepSpace}0d`
+                      : `${COLORS.skyBlue}22`,
+                    border: isToday
+                      ? `2px solid ${checked ? COLORS.blueGreen : COLORS.orange}`
+                      : '2px solid transparent',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: checked ? `0 3px 10px ${COLORS.blueGreen}44` : 'none',
+                  }}
+                >
+                  {checked ? (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M5 13l4 4L19 7"
+                        stroke="white"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  ) : isPast ? (
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M18 6L6 18M6 6l12 12"
+                        stroke={COLORS.deepSpace}
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeOpacity="0.3"
+                      />
+                    </svg>
+                  ) : null}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -244,18 +296,50 @@ export default function DailyCheckinScreen({ onGoHome, onAddEnergy }) {
           <span style={{ fontSize: 20 }}>⚡</span>
           <div>
             <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.deepSpace }}>
-              +2 Energy per check-in
+              Energy per check-in + mystery box every 7 days
             </div>
             <div style={{ fontSize: 11, color: COLORS.deepSpace, opacity: 0.55 }}>
-              Check in daily to keep your streak and earn energy
+              Check in daily to keep your streak going
             </div>
           </div>
         </div>
 
+        {rewardMsg && (
+          <div
+            style={{
+              background: `${COLORS.blueGreen}22`,
+              border: `1.5px solid ${COLORS.blueGreen}66`,
+              borderRadius: 12,
+              padding: '10px 14px',
+              fontSize: 13,
+              fontWeight: 700,
+              color: COLORS.deepSpace,
+            }}
+          >
+            {rewardMsg}
+          </div>
+        )}
+
+        {error && (
+          <div
+            style={{
+              background: '#ff4d4d22',
+              border: '1.5px solid #ff4d4d66',
+              borderRadius: 12,
+              padding: '10px 14px',
+              fontSize: 13,
+              fontWeight: 700,
+              color: '#b00020',
+            }}
+          >
+            {error}
+          </div>
+        )}
+
         {/* Check-in button */}
         <button
           onClick={handleCheckin}
-          disabled={alreadyCheckedIn}
+          disabled={alreadyCheckedIn || submitting || loading}
           style={{
             background: alreadyCheckedIn
               ? `${COLORS.blueGreen}44`
@@ -266,7 +350,8 @@ export default function DailyCheckinScreen({ onGoHome, onAddEnergy }) {
             padding: '18px',
             fontSize: 16,
             fontWeight: 800,
-            cursor: alreadyCheckedIn ? 'not-allowed' : 'pointer',
+            cursor: alreadyCheckedIn || submitting || loading ? 'not-allowed' : 'pointer',
+            opacity: submitting || loading ? 0.7 : 1,
             letterSpacing: 1,
             boxShadow: alreadyCheckedIn ? 'none' : `0 8px 24px ${COLORS.blueGreen}55`,
             display: 'flex',
@@ -275,17 +360,21 @@ export default function DailyCheckinScreen({ onGoHome, onAddEnergy }) {
             gap: 8,
           }}
         >
-          {alreadyCheckedIn ? (
+          {loading ? (
+            'Loading…'
+          ) : alreadyCheckedIn ? (
             <>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                 <path d="M5 13l4 4L19 7" stroke={COLORS.blueGreen} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               Checked In Today
             </>
+          ) : submitting ? (
+            'Checking in…'
           ) : (
             <>
               <span>📅</span>
-              Check In Now (+2 ⚡)
+              Check In Now
             </>
           )}
         </button>
