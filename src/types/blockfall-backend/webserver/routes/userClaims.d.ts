@@ -1,63 +1,11 @@
 import { z } from 'zod';
 import { type AuthEnv } from '../middleware/auth.ts';
-/**
- * GET /user — returns the authenticated user's profile + stats
- * Requires a valid Bearer JWT.
- */
-export declare const userRoutes: import("hono/hono-base").HonoBase<AuthEnv, {
-    "/": {
-        $get: {
-            input: {};
-            output: {
-                error: string;
-            };
-            outputFormat: "json";
-            status: 404;
-        } | {
-            input: {};
-            output: {
-                user_id: string;
-                address: string;
-                name: string;
-                created_at: string;
-                stats: {
-                    best_score: number;
-                    last_score: number;
-                    games_played: number;
-                    total_score: string;
-                    today_score: number;
-                    energy: number;
-                };
-                inventory: {
-                    item_id: string;
-                    item_type: number;
-                    acquisition_type: string;
-                    buy_date: string | null;
-                }[];
-                pending_claims: {
-                    payout_id: string;
-                    payout_type: string;
-                    action_id: string;
-                    amount: string;
-                    payment_token: number;
-                    signature: string;
-                }[];
-            };
-            outputFormat: "json";
-            status: import("hono/utils/http-status").ContentfulStatusCode;
-        };
-    };
-}, "/", "/">;
-/**
- * GET /checkuser?account — check if a wallet address is already registered.
- * Public endpoint — no auth required.
- */
-export declare const checkUserRoute: import("hono/hono-base").HonoBase<import("hono/types").BlankEnv, {
-    "/": {
-        $get: {
+export declare const userClaimsRoutes: import("hono/hono-base").HonoBase<AuthEnv, {
+    "/submit": {
+        $post: {
             input: {
-                query: {
-                    account: string | string[];
+                json: {
+                    tx_hash: string;
                 };
             };
             output: {
@@ -1255,28 +1203,63 @@ export declare const checkUserRoute: import("hono/hono-base").HonoBase<import("h
             status: 400;
         } | {
             input: {
-                query: {
-                    account: string | string[];
+                json: {
+                    tx_hash: string;
                 };
             };
             output: {
-                registered: false;
+                error: string;
             };
             outputFormat: "json";
-            status: import("hono/utils/http-status").ContentfulStatusCode;
+            status: 404;
         } | {
             input: {
-                query: {
-                    account: string | string[];
+                json: {
+                    tx_hash: string;
                 };
             };
             output: {
-                registered: true;
-                name: string;
+                error: string;
+            };
+            outputFormat: "json";
+            status: 409;
+        } | {
+            input: {
+                json: {
+                    tx_hash: string;
+                };
+            };
+            output: {
+                error: string;
+            };
+            outputFormat: "json";
+            status: 400;
+        } | {
+            input: {
+                json: {
+                    tx_hash: string;
+                };
+            };
+            output: {
+                error: string;
+            };
+            outputFormat: "json";
+            status: 403;
+        } | {
+            input: {
+                json: {
+                    tx_hash: string;
+                };
+            };
+            output: {
+                transaction_id: string;
+                payout_id: string;
+                action_id: `0x${string}`;
+                amount: string;
             };
             outputFormat: "json";
             status: import("hono/utils/http-status").ContentfulStatusCode;
         };
     };
-}, "/", "/">;
-//# sourceMappingURL=user.d.ts.map
+}, "/", "/submit">;
+//# sourceMappingURL=userClaims.d.ts.map

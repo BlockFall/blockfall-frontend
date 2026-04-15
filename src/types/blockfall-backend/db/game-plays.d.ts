@@ -1,11 +1,12 @@
-export type GamePlayRow = {
+export interface GamePlayRow {
     game_play_id: string;
     user_id: string;
     started_at: Date;
     ended_at: Date | null;
     score: number | null;
-    day_id: string;
-};
+    boost_multiplier: number | null;
+    daily_tournament_id: string;
+}
 /**
  * Starts a game play session. Transactionally:
  * 1. Checks that user has energy > 0

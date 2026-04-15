@@ -1,4 +1,4 @@
-declare const app: import("hono/hono-base").HonoBase<import("hono/types").BlankEnv, ({
+declare const app: import("hono/hono-base").HonoBase<{}, ({
     "/": {
         $get: {
             input: {};
@@ -3762,6 +3762,14 @@ declare const app: import("hono/hono-base").HonoBase<import("hono/types").BlankE
                     acquisition_type: string;
                     buy_date: string | null;
                 }[];
+                pending_claims: {
+                    payout_id: string;
+                    payout_type: string;
+                    action_id: string;
+                    amount: string;
+                    payment_token: number;
+                    signature: string;
+                }[];
             };
             outputFormat: "json";
             status: import("hono/utils/http-status").ContentfulStatusCode;
@@ -7521,7 +7529,1384 @@ declare const app: import("hono/hono-base").HonoBase<import("hono/types").BlankE
             status: import("hono/utils/http-status").ContentfulStatusCode;
         };
     };
-}, "/purchase">, "/", "/health">;
+}, "/purchase"> | import("hono/types").MergeSchemaPath<{
+    "/submit": {
+        $post: {
+            input: {
+                json: {
+                    tx_hash: string;
+                };
+            };
+            output: {
+                error: string;
+                details: ({
+                    readonly code: "invalid_type";
+                    readonly expected: import("zod/v4/core").$ZodInvalidTypeExpected;
+                    readonly input?: import("hono/utils/types").JSONValue;
+                    readonly path: (string | number | null)[];
+                    readonly message: string;
+                } | {
+                    readonly code: "too_big";
+                    readonly origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file" | (string & {});
+                    readonly maximum: number;
+                    readonly inclusive?: boolean | undefined;
+                    readonly exact?: boolean | undefined;
+                    readonly input?: import("hono/utils/types").JSONValue;
+                    readonly path: (string | number | null)[];
+                    readonly message: string;
+                } | {
+                    readonly code: "too_small";
+                    readonly origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file" | (string & {});
+                    readonly minimum: number;
+                    readonly inclusive?: boolean | undefined;
+                    readonly exact?: boolean | undefined;
+                    readonly input?: import("hono/utils/types").JSONValue;
+                    readonly path: (string | number | null)[];
+                    readonly message: string;
+                } | {
+                    readonly code: "invalid_format";
+                    readonly format: import("zod/v4/core").$ZodStringFormats | (string & {});
+                    readonly pattern?: string | undefined;
+                    readonly input?: string | undefined;
+                    readonly path: (string | number | null)[];
+                    readonly message: string;
+                } | {
+                    readonly code: "not_multiple_of";
+                    readonly divisor: number;
+                    readonly input?: number | undefined;
+                    readonly path: (string | number | null)[];
+                    readonly message: string;
+                } | {
+                    readonly code: "unrecognized_keys";
+                    readonly keys: string[];
+                    readonly input?: {
+                        [x: string]: import("hono/utils/types").JSONValue;
+                    } | undefined;
+                    readonly path: (string | number | null)[];
+                    readonly message: string;
+                } | {
+                    readonly code: "invalid_union";
+                    readonly errors: ({
+                        readonly code: "invalid_type";
+                        readonly expected: import("zod/v4/core").$ZodInvalidTypeExpected;
+                        readonly input?: import("hono/utils/types").JSONValue;
+                        readonly path: (string | number | null)[];
+                        readonly message: string;
+                    } | {
+                        readonly code: "too_big";
+                        readonly origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file" | (string & {});
+                        readonly maximum: number;
+                        readonly inclusive?: boolean | undefined;
+                        readonly exact?: boolean | undefined;
+                        readonly input?: import("hono/utils/types").JSONValue;
+                        readonly path: (string | number | null)[];
+                        readonly message: string;
+                    } | {
+                        readonly code: "too_small";
+                        readonly origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file" | (string & {});
+                        readonly minimum: number;
+                        readonly inclusive?: boolean | undefined;
+                        readonly exact?: boolean | undefined;
+                        readonly input?: import("hono/utils/types").JSONValue;
+                        readonly path: (string | number | null)[];
+                        readonly message: string;
+                    } | {
+                        readonly code: "invalid_format";
+                        readonly format: import("zod/v4/core").$ZodStringFormats | (string & {});
+                        readonly pattern?: string | undefined;
+                        readonly input?: string | undefined;
+                        readonly path: (string | number | null)[];
+                        readonly message: string;
+                    } | {
+                        readonly code: "not_multiple_of";
+                        readonly divisor: number;
+                        readonly input?: number | undefined;
+                        readonly path: (string | number | null)[];
+                        readonly message: string;
+                    } | {
+                        readonly code: "unrecognized_keys";
+                        readonly keys: string[];
+                        readonly input?: {
+                            [x: string]: import("hono/utils/types").JSONValue;
+                        } | undefined;
+                        readonly path: (string | number | null)[];
+                        readonly message: string;
+                    } | /*elided*/ any | {
+                        readonly code: "invalid_union";
+                        readonly errors: [];
+                        readonly input?: import("hono/utils/types").JSONValue;
+                        readonly discriminator?: string | undefined | undefined;
+                        readonly inclusive: false;
+                        readonly path: (string | number | null)[];
+                        readonly message: string;
+                    } | {
+                        readonly code: "invalid_key";
+                        readonly origin: "map" | "record";
+                        readonly issues: ({
+                            readonly code: "invalid_type";
+                            readonly expected: import("zod/v4/core").$ZodInvalidTypeExpected;
+                            readonly input?: import("hono/utils/types").JSONValue;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | {
+                            readonly code: "too_big";
+                            readonly origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file" | (string & {});
+                            readonly maximum: number;
+                            readonly inclusive?: boolean | undefined;
+                            readonly exact?: boolean | undefined;
+                            readonly input?: import("hono/utils/types").JSONValue;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | {
+                            readonly code: "too_small";
+                            readonly origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file" | (string & {});
+                            readonly minimum: number;
+                            readonly inclusive?: boolean | undefined;
+                            readonly exact?: boolean | undefined;
+                            readonly input?: import("hono/utils/types").JSONValue;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | {
+                            readonly code: "invalid_format";
+                            readonly format: import("zod/v4/core").$ZodStringFormats | (string & {});
+                            readonly pattern?: string | undefined;
+                            readonly input?: string | undefined;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | {
+                            readonly code: "not_multiple_of";
+                            readonly divisor: number;
+                            readonly input?: number | undefined;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | {
+                            readonly code: "unrecognized_keys";
+                            readonly keys: string[];
+                            readonly input?: {
+                                [x: string]: import("hono/utils/types").JSONValue;
+                            } | undefined;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | /*elided*/ any | {
+                            readonly code: "invalid_union";
+                            readonly errors: [];
+                            readonly input?: import("hono/utils/types").JSONValue;
+                            readonly discriminator?: string | undefined | undefined;
+                            readonly inclusive: false;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | /*elided*/ any | {
+                            readonly code: "invalid_element";
+                            readonly origin: "map" | "set";
+                            readonly key: import("hono/utils/types").JSONValue;
+                            readonly issues: ({
+                                readonly code: "invalid_type";
+                                readonly expected: import("zod/v4/core").$ZodInvalidTypeExpected;
+                                readonly input?: import("hono/utils/types").JSONValue;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | {
+                                readonly code: "too_big";
+                                readonly origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file" | (string & {});
+                                readonly maximum: number;
+                                readonly inclusive?: boolean | undefined;
+                                readonly exact?: boolean | undefined;
+                                readonly input?: import("hono/utils/types").JSONValue;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | {
+                                readonly code: "too_small";
+                                readonly origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file" | (string & {});
+                                readonly minimum: number;
+                                readonly inclusive?: boolean | undefined;
+                                readonly exact?: boolean | undefined;
+                                readonly input?: import("hono/utils/types").JSONValue;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | {
+                                readonly code: "invalid_format";
+                                readonly format: import("zod/v4/core").$ZodStringFormats | (string & {});
+                                readonly pattern?: string | undefined;
+                                readonly input?: string | undefined;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | {
+                                readonly code: "not_multiple_of";
+                                readonly divisor: number;
+                                readonly input?: number | undefined;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | {
+                                readonly code: "unrecognized_keys";
+                                readonly keys: string[];
+                                readonly input?: {
+                                    [x: string]: import("hono/utils/types").JSONValue;
+                                } | undefined;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | /*elided*/ any | {
+                                readonly code: "invalid_union";
+                                readonly errors: [];
+                                readonly input?: import("hono/utils/types").JSONValue;
+                                readonly discriminator?: string | undefined | undefined;
+                                readonly inclusive: false;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | /*elided*/ any | /*elided*/ any | {
+                                readonly code: "invalid_value";
+                                readonly values: (string | number | boolean | null)[];
+                                readonly input?: import("hono/utils/types").JSONValue;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | {
+                                readonly code: "custom";
+                                readonly params?: {
+                                    [x: string]: any;
+                                } | undefined;
+                                readonly input?: import("hono/utils/types").JSONValue;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            })[];
+                            readonly input?: import("hono/utils/types").JSONValue;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | {
+                            readonly code: "invalid_value";
+                            readonly values: (string | number | boolean | null)[];
+                            readonly input?: import("hono/utils/types").JSONValue;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | {
+                            readonly code: "custom";
+                            readonly params?: {
+                                [x: string]: any;
+                            } | undefined;
+                            readonly input?: import("hono/utils/types").JSONValue;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        })[];
+                        readonly input?: import("hono/utils/types").JSONValue;
+                        readonly path: (string | number | null)[];
+                        readonly message: string;
+                    } | {
+                        readonly code: "invalid_element";
+                        readonly origin: "map" | "set";
+                        readonly key: import("hono/utils/types").JSONValue;
+                        readonly issues: ({
+                            readonly code: "invalid_type";
+                            readonly expected: import("zod/v4/core").$ZodInvalidTypeExpected;
+                            readonly input?: import("hono/utils/types").JSONValue;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | {
+                            readonly code: "too_big";
+                            readonly origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file" | (string & {});
+                            readonly maximum: number;
+                            readonly inclusive?: boolean | undefined;
+                            readonly exact?: boolean | undefined;
+                            readonly input?: import("hono/utils/types").JSONValue;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | {
+                            readonly code: "too_small";
+                            readonly origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file" | (string & {});
+                            readonly minimum: number;
+                            readonly inclusive?: boolean | undefined;
+                            readonly exact?: boolean | undefined;
+                            readonly input?: import("hono/utils/types").JSONValue;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | {
+                            readonly code: "invalid_format";
+                            readonly format: import("zod/v4/core").$ZodStringFormats | (string & {});
+                            readonly pattern?: string | undefined;
+                            readonly input?: string | undefined;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | {
+                            readonly code: "not_multiple_of";
+                            readonly divisor: number;
+                            readonly input?: number | undefined;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | {
+                            readonly code: "unrecognized_keys";
+                            readonly keys: string[];
+                            readonly input?: {
+                                [x: string]: import("hono/utils/types").JSONValue;
+                            } | undefined;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | /*elided*/ any | {
+                            readonly code: "invalid_union";
+                            readonly errors: [];
+                            readonly input?: import("hono/utils/types").JSONValue;
+                            readonly discriminator?: string | undefined | undefined;
+                            readonly inclusive: false;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | {
+                            readonly code: "invalid_key";
+                            readonly origin: "map" | "record";
+                            readonly issues: ({
+                                readonly code: "invalid_type";
+                                readonly expected: import("zod/v4/core").$ZodInvalidTypeExpected;
+                                readonly input?: import("hono/utils/types").JSONValue;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | {
+                                readonly code: "too_big";
+                                readonly origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file" | (string & {});
+                                readonly maximum: number;
+                                readonly inclusive?: boolean | undefined;
+                                readonly exact?: boolean | undefined;
+                                readonly input?: import("hono/utils/types").JSONValue;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | {
+                                readonly code: "too_small";
+                                readonly origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file" | (string & {});
+                                readonly minimum: number;
+                                readonly inclusive?: boolean | undefined;
+                                readonly exact?: boolean | undefined;
+                                readonly input?: import("hono/utils/types").JSONValue;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | {
+                                readonly code: "invalid_format";
+                                readonly format: import("zod/v4/core").$ZodStringFormats | (string & {});
+                                readonly pattern?: string | undefined;
+                                readonly input?: string | undefined;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | {
+                                readonly code: "not_multiple_of";
+                                readonly divisor: number;
+                                readonly input?: number | undefined;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | {
+                                readonly code: "unrecognized_keys";
+                                readonly keys: string[];
+                                readonly input?: {
+                                    [x: string]: import("hono/utils/types").JSONValue;
+                                } | undefined;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | /*elided*/ any | {
+                                readonly code: "invalid_union";
+                                readonly errors: [];
+                                readonly input?: import("hono/utils/types").JSONValue;
+                                readonly discriminator?: string | undefined | undefined;
+                                readonly inclusive: false;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | /*elided*/ any | /*elided*/ any | {
+                                readonly code: "invalid_value";
+                                readonly values: (string | number | boolean | null)[];
+                                readonly input?: import("hono/utils/types").JSONValue;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | {
+                                readonly code: "custom";
+                                readonly params?: {
+                                    [x: string]: any;
+                                } | undefined;
+                                readonly input?: import("hono/utils/types").JSONValue;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            })[];
+                            readonly input?: import("hono/utils/types").JSONValue;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | /*elided*/ any | {
+                            readonly code: "invalid_value";
+                            readonly values: (string | number | boolean | null)[];
+                            readonly input?: import("hono/utils/types").JSONValue;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | {
+                            readonly code: "custom";
+                            readonly params?: {
+                                [x: string]: any;
+                            } | undefined;
+                            readonly input?: import("hono/utils/types").JSONValue;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        })[];
+                        readonly input?: import("hono/utils/types").JSONValue;
+                        readonly path: (string | number | null)[];
+                        readonly message: string;
+                    } | {
+                        readonly code: "invalid_value";
+                        readonly values: (string | number | boolean | null)[];
+                        readonly input?: import("hono/utils/types").JSONValue;
+                        readonly path: (string | number | null)[];
+                        readonly message: string;
+                    } | {
+                        readonly code: "custom";
+                        readonly params?: {
+                            [x: string]: any;
+                        } | undefined;
+                        readonly input?: import("hono/utils/types").JSONValue;
+                        readonly path: (string | number | null)[];
+                        readonly message: string;
+                    })[][];
+                    readonly input?: import("hono/utils/types").JSONValue;
+                    readonly discriminator?: string | undefined | undefined;
+                    readonly inclusive?: true | undefined;
+                    readonly path: (string | number | null)[];
+                    readonly message: string;
+                } | {
+                    readonly code: "invalid_union";
+                    readonly errors: [];
+                    readonly input?: import("hono/utils/types").JSONValue;
+                    readonly discriminator?: string | undefined | undefined;
+                    readonly inclusive: false;
+                    readonly path: (string | number | null)[];
+                    readonly message: string;
+                } | {
+                    readonly code: "invalid_key";
+                    readonly origin: "map" | "record";
+                    readonly issues: ({
+                        readonly code: "invalid_type";
+                        readonly expected: import("zod/v4/core").$ZodInvalidTypeExpected;
+                        readonly input?: import("hono/utils/types").JSONValue;
+                        readonly path: (string | number | null)[];
+                        readonly message: string;
+                    } | {
+                        readonly code: "too_big";
+                        readonly origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file" | (string & {});
+                        readonly maximum: number;
+                        readonly inclusive?: boolean | undefined;
+                        readonly exact?: boolean | undefined;
+                        readonly input?: import("hono/utils/types").JSONValue;
+                        readonly path: (string | number | null)[];
+                        readonly message: string;
+                    } | {
+                        readonly code: "too_small";
+                        readonly origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file" | (string & {});
+                        readonly minimum: number;
+                        readonly inclusive?: boolean | undefined;
+                        readonly exact?: boolean | undefined;
+                        readonly input?: import("hono/utils/types").JSONValue;
+                        readonly path: (string | number | null)[];
+                        readonly message: string;
+                    } | {
+                        readonly code: "invalid_format";
+                        readonly format: import("zod/v4/core").$ZodStringFormats | (string & {});
+                        readonly pattern?: string | undefined;
+                        readonly input?: string | undefined;
+                        readonly path: (string | number | null)[];
+                        readonly message: string;
+                    } | {
+                        readonly code: "not_multiple_of";
+                        readonly divisor: number;
+                        readonly input?: number | undefined;
+                        readonly path: (string | number | null)[];
+                        readonly message: string;
+                    } | {
+                        readonly code: "unrecognized_keys";
+                        readonly keys: string[];
+                        readonly input?: {
+                            [x: string]: import("hono/utils/types").JSONValue;
+                        } | undefined;
+                        readonly path: (string | number | null)[];
+                        readonly message: string;
+                    } | {
+                        readonly code: "invalid_union";
+                        readonly errors: ({
+                            readonly code: "invalid_type";
+                            readonly expected: import("zod/v4/core").$ZodInvalidTypeExpected;
+                            readonly input?: import("hono/utils/types").JSONValue;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | {
+                            readonly code: "too_big";
+                            readonly origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file" | (string & {});
+                            readonly maximum: number;
+                            readonly inclusive?: boolean | undefined;
+                            readonly exact?: boolean | undefined;
+                            readonly input?: import("hono/utils/types").JSONValue;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | {
+                            readonly code: "too_small";
+                            readonly origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file" | (string & {});
+                            readonly minimum: number;
+                            readonly inclusive?: boolean | undefined;
+                            readonly exact?: boolean | undefined;
+                            readonly input?: import("hono/utils/types").JSONValue;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | {
+                            readonly code: "invalid_format";
+                            readonly format: import("zod/v4/core").$ZodStringFormats | (string & {});
+                            readonly pattern?: string | undefined;
+                            readonly input?: string | undefined;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | {
+                            readonly code: "not_multiple_of";
+                            readonly divisor: number;
+                            readonly input?: number | undefined;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | {
+                            readonly code: "unrecognized_keys";
+                            readonly keys: string[];
+                            readonly input?: {
+                                [x: string]: import("hono/utils/types").JSONValue;
+                            } | undefined;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | /*elided*/ any | {
+                            readonly code: "invalid_union";
+                            readonly errors: [];
+                            readonly input?: import("hono/utils/types").JSONValue;
+                            readonly discriminator?: string | undefined | undefined;
+                            readonly inclusive: false;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | /*elided*/ any | {
+                            readonly code: "invalid_element";
+                            readonly origin: "map" | "set";
+                            readonly key: import("hono/utils/types").JSONValue;
+                            readonly issues: ({
+                                readonly code: "invalid_type";
+                                readonly expected: import("zod/v4/core").$ZodInvalidTypeExpected;
+                                readonly input?: import("hono/utils/types").JSONValue;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | {
+                                readonly code: "too_big";
+                                readonly origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file" | (string & {});
+                                readonly maximum: number;
+                                readonly inclusive?: boolean | undefined;
+                                readonly exact?: boolean | undefined;
+                                readonly input?: import("hono/utils/types").JSONValue;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | {
+                                readonly code: "too_small";
+                                readonly origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file" | (string & {});
+                                readonly minimum: number;
+                                readonly inclusive?: boolean | undefined;
+                                readonly exact?: boolean | undefined;
+                                readonly input?: import("hono/utils/types").JSONValue;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | {
+                                readonly code: "invalid_format";
+                                readonly format: import("zod/v4/core").$ZodStringFormats | (string & {});
+                                readonly pattern?: string | undefined;
+                                readonly input?: string | undefined;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | {
+                                readonly code: "not_multiple_of";
+                                readonly divisor: number;
+                                readonly input?: number | undefined;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | {
+                                readonly code: "unrecognized_keys";
+                                readonly keys: string[];
+                                readonly input?: {
+                                    [x: string]: import("hono/utils/types").JSONValue;
+                                } | undefined;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | /*elided*/ any | {
+                                readonly code: "invalid_union";
+                                readonly errors: [];
+                                readonly input?: import("hono/utils/types").JSONValue;
+                                readonly discriminator?: string | undefined | undefined;
+                                readonly inclusive: false;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | /*elided*/ any | /*elided*/ any | {
+                                readonly code: "invalid_value";
+                                readonly values: (string | number | boolean | null)[];
+                                readonly input?: import("hono/utils/types").JSONValue;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | {
+                                readonly code: "custom";
+                                readonly params?: {
+                                    [x: string]: any;
+                                } | undefined;
+                                readonly input?: import("hono/utils/types").JSONValue;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            })[];
+                            readonly input?: import("hono/utils/types").JSONValue;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | {
+                            readonly code: "invalid_value";
+                            readonly values: (string | number | boolean | null)[];
+                            readonly input?: import("hono/utils/types").JSONValue;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | {
+                            readonly code: "custom";
+                            readonly params?: {
+                                [x: string]: any;
+                            } | undefined;
+                            readonly input?: import("hono/utils/types").JSONValue;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        })[][];
+                        readonly input?: import("hono/utils/types").JSONValue;
+                        readonly discriminator?: string | undefined | undefined;
+                        readonly inclusive?: true | undefined;
+                        readonly path: (string | number | null)[];
+                        readonly message: string;
+                    } | {
+                        readonly code: "invalid_union";
+                        readonly errors: [];
+                        readonly input?: import("hono/utils/types").JSONValue;
+                        readonly discriminator?: string | undefined | undefined;
+                        readonly inclusive: false;
+                        readonly path: (string | number | null)[];
+                        readonly message: string;
+                    } | /*elided*/ any | {
+                        readonly code: "invalid_element";
+                        readonly origin: "map" | "set";
+                        readonly key: import("hono/utils/types").JSONValue;
+                        readonly issues: ({
+                            readonly code: "invalid_type";
+                            readonly expected: import("zod/v4/core").$ZodInvalidTypeExpected;
+                            readonly input?: import("hono/utils/types").JSONValue;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | {
+                            readonly code: "too_big";
+                            readonly origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file" | (string & {});
+                            readonly maximum: number;
+                            readonly inclusive?: boolean | undefined;
+                            readonly exact?: boolean | undefined;
+                            readonly input?: import("hono/utils/types").JSONValue;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | {
+                            readonly code: "too_small";
+                            readonly origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file" | (string & {});
+                            readonly minimum: number;
+                            readonly inclusive?: boolean | undefined;
+                            readonly exact?: boolean | undefined;
+                            readonly input?: import("hono/utils/types").JSONValue;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | {
+                            readonly code: "invalid_format";
+                            readonly format: import("zod/v4/core").$ZodStringFormats | (string & {});
+                            readonly pattern?: string | undefined;
+                            readonly input?: string | undefined;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | {
+                            readonly code: "not_multiple_of";
+                            readonly divisor: number;
+                            readonly input?: number | undefined;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | {
+                            readonly code: "unrecognized_keys";
+                            readonly keys: string[];
+                            readonly input?: {
+                                [x: string]: import("hono/utils/types").JSONValue;
+                            } | undefined;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | {
+                            readonly code: "invalid_union";
+                            readonly errors: ({
+                                readonly code: "invalid_type";
+                                readonly expected: import("zod/v4/core").$ZodInvalidTypeExpected;
+                                readonly input?: import("hono/utils/types").JSONValue;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | {
+                                readonly code: "too_big";
+                                readonly origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file" | (string & {});
+                                readonly maximum: number;
+                                readonly inclusive?: boolean | undefined;
+                                readonly exact?: boolean | undefined;
+                                readonly input?: import("hono/utils/types").JSONValue;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | {
+                                readonly code: "too_small";
+                                readonly origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file" | (string & {});
+                                readonly minimum: number;
+                                readonly inclusive?: boolean | undefined;
+                                readonly exact?: boolean | undefined;
+                                readonly input?: import("hono/utils/types").JSONValue;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | {
+                                readonly code: "invalid_format";
+                                readonly format: import("zod/v4/core").$ZodStringFormats | (string & {});
+                                readonly pattern?: string | undefined;
+                                readonly input?: string | undefined;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | {
+                                readonly code: "not_multiple_of";
+                                readonly divisor: number;
+                                readonly input?: number | undefined;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | {
+                                readonly code: "unrecognized_keys";
+                                readonly keys: string[];
+                                readonly input?: {
+                                    [x: string]: import("hono/utils/types").JSONValue;
+                                } | undefined;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | /*elided*/ any | {
+                                readonly code: "invalid_union";
+                                readonly errors: [];
+                                readonly input?: import("hono/utils/types").JSONValue;
+                                readonly discriminator?: string | undefined | undefined;
+                                readonly inclusive: false;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | /*elided*/ any | /*elided*/ any | {
+                                readonly code: "invalid_value";
+                                readonly values: (string | number | boolean | null)[];
+                                readonly input?: import("hono/utils/types").JSONValue;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | {
+                                readonly code: "custom";
+                                readonly params?: {
+                                    [x: string]: any;
+                                } | undefined;
+                                readonly input?: import("hono/utils/types").JSONValue;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            })[][];
+                            readonly input?: import("hono/utils/types").JSONValue;
+                            readonly discriminator?: string | undefined | undefined;
+                            readonly inclusive?: true | undefined;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | {
+                            readonly code: "invalid_union";
+                            readonly errors: [];
+                            readonly input?: import("hono/utils/types").JSONValue;
+                            readonly discriminator?: string | undefined | undefined;
+                            readonly inclusive: false;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | /*elided*/ any | /*elided*/ any | {
+                            readonly code: "invalid_value";
+                            readonly values: (string | number | boolean | null)[];
+                            readonly input?: import("hono/utils/types").JSONValue;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | {
+                            readonly code: "custom";
+                            readonly params?: {
+                                [x: string]: any;
+                            } | undefined;
+                            readonly input?: import("hono/utils/types").JSONValue;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        })[];
+                        readonly input?: import("hono/utils/types").JSONValue;
+                        readonly path: (string | number | null)[];
+                        readonly message: string;
+                    } | {
+                        readonly code: "invalid_value";
+                        readonly values: (string | number | boolean | null)[];
+                        readonly input?: import("hono/utils/types").JSONValue;
+                        readonly path: (string | number | null)[];
+                        readonly message: string;
+                    } | {
+                        readonly code: "custom";
+                        readonly params?: {
+                            [x: string]: any;
+                        } | undefined;
+                        readonly input?: import("hono/utils/types").JSONValue;
+                        readonly path: (string | number | null)[];
+                        readonly message: string;
+                    })[];
+                    readonly input?: import("hono/utils/types").JSONValue;
+                    readonly path: (string | number | null)[];
+                    readonly message: string;
+                } | {
+                    readonly code: "invalid_element";
+                    readonly origin: "map" | "set";
+                    readonly key: import("hono/utils/types").JSONValue;
+                    readonly issues: ({
+                        readonly code: "invalid_type";
+                        readonly expected: import("zod/v4/core").$ZodInvalidTypeExpected;
+                        readonly input?: import("hono/utils/types").JSONValue;
+                        readonly path: (string | number | null)[];
+                        readonly message: string;
+                    } | {
+                        readonly code: "too_big";
+                        readonly origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file" | (string & {});
+                        readonly maximum: number;
+                        readonly inclusive?: boolean | undefined;
+                        readonly exact?: boolean | undefined;
+                        readonly input?: import("hono/utils/types").JSONValue;
+                        readonly path: (string | number | null)[];
+                        readonly message: string;
+                    } | {
+                        readonly code: "too_small";
+                        readonly origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file" | (string & {});
+                        readonly minimum: number;
+                        readonly inclusive?: boolean | undefined;
+                        readonly exact?: boolean | undefined;
+                        readonly input?: import("hono/utils/types").JSONValue;
+                        readonly path: (string | number | null)[];
+                        readonly message: string;
+                    } | {
+                        readonly code: "invalid_format";
+                        readonly format: import("zod/v4/core").$ZodStringFormats | (string & {});
+                        readonly pattern?: string | undefined;
+                        readonly input?: string | undefined;
+                        readonly path: (string | number | null)[];
+                        readonly message: string;
+                    } | {
+                        readonly code: "not_multiple_of";
+                        readonly divisor: number;
+                        readonly input?: number | undefined;
+                        readonly path: (string | number | null)[];
+                        readonly message: string;
+                    } | {
+                        readonly code: "unrecognized_keys";
+                        readonly keys: string[];
+                        readonly input?: {
+                            [x: string]: import("hono/utils/types").JSONValue;
+                        } | undefined;
+                        readonly path: (string | number | null)[];
+                        readonly message: string;
+                    } | {
+                        readonly code: "invalid_union";
+                        readonly errors: ({
+                            readonly code: "invalid_type";
+                            readonly expected: import("zod/v4/core").$ZodInvalidTypeExpected;
+                            readonly input?: import("hono/utils/types").JSONValue;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | {
+                            readonly code: "too_big";
+                            readonly origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file" | (string & {});
+                            readonly maximum: number;
+                            readonly inclusive?: boolean | undefined;
+                            readonly exact?: boolean | undefined;
+                            readonly input?: import("hono/utils/types").JSONValue;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | {
+                            readonly code: "too_small";
+                            readonly origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file" | (string & {});
+                            readonly minimum: number;
+                            readonly inclusive?: boolean | undefined;
+                            readonly exact?: boolean | undefined;
+                            readonly input?: import("hono/utils/types").JSONValue;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | {
+                            readonly code: "invalid_format";
+                            readonly format: import("zod/v4/core").$ZodStringFormats | (string & {});
+                            readonly pattern?: string | undefined;
+                            readonly input?: string | undefined;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | {
+                            readonly code: "not_multiple_of";
+                            readonly divisor: number;
+                            readonly input?: number | undefined;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | {
+                            readonly code: "unrecognized_keys";
+                            readonly keys: string[];
+                            readonly input?: {
+                                [x: string]: import("hono/utils/types").JSONValue;
+                            } | undefined;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | /*elided*/ any | {
+                            readonly code: "invalid_union";
+                            readonly errors: [];
+                            readonly input?: import("hono/utils/types").JSONValue;
+                            readonly discriminator?: string | undefined | undefined;
+                            readonly inclusive: false;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | {
+                            readonly code: "invalid_key";
+                            readonly origin: "map" | "record";
+                            readonly issues: ({
+                                readonly code: "invalid_type";
+                                readonly expected: import("zod/v4/core").$ZodInvalidTypeExpected;
+                                readonly input?: import("hono/utils/types").JSONValue;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | {
+                                readonly code: "too_big";
+                                readonly origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file" | (string & {});
+                                readonly maximum: number;
+                                readonly inclusive?: boolean | undefined;
+                                readonly exact?: boolean | undefined;
+                                readonly input?: import("hono/utils/types").JSONValue;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | {
+                                readonly code: "too_small";
+                                readonly origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file" | (string & {});
+                                readonly minimum: number;
+                                readonly inclusive?: boolean | undefined;
+                                readonly exact?: boolean | undefined;
+                                readonly input?: import("hono/utils/types").JSONValue;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | {
+                                readonly code: "invalid_format";
+                                readonly format: import("zod/v4/core").$ZodStringFormats | (string & {});
+                                readonly pattern?: string | undefined;
+                                readonly input?: string | undefined;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | {
+                                readonly code: "not_multiple_of";
+                                readonly divisor: number;
+                                readonly input?: number | undefined;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | {
+                                readonly code: "unrecognized_keys";
+                                readonly keys: string[];
+                                readonly input?: {
+                                    [x: string]: import("hono/utils/types").JSONValue;
+                                } | undefined;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | /*elided*/ any | {
+                                readonly code: "invalid_union";
+                                readonly errors: [];
+                                readonly input?: import("hono/utils/types").JSONValue;
+                                readonly discriminator?: string | undefined | undefined;
+                                readonly inclusive: false;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | /*elided*/ any | /*elided*/ any | {
+                                readonly code: "invalid_value";
+                                readonly values: (string | number | boolean | null)[];
+                                readonly input?: import("hono/utils/types").JSONValue;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | {
+                                readonly code: "custom";
+                                readonly params?: {
+                                    [x: string]: any;
+                                } | undefined;
+                                readonly input?: import("hono/utils/types").JSONValue;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            })[];
+                            readonly input?: import("hono/utils/types").JSONValue;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | /*elided*/ any | {
+                            readonly code: "invalid_value";
+                            readonly values: (string | number | boolean | null)[];
+                            readonly input?: import("hono/utils/types").JSONValue;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | {
+                            readonly code: "custom";
+                            readonly params?: {
+                                [x: string]: any;
+                            } | undefined;
+                            readonly input?: import("hono/utils/types").JSONValue;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        })[][];
+                        readonly input?: import("hono/utils/types").JSONValue;
+                        readonly discriminator?: string | undefined | undefined;
+                        readonly inclusive?: true | undefined;
+                        readonly path: (string | number | null)[];
+                        readonly message: string;
+                    } | {
+                        readonly code: "invalid_union";
+                        readonly errors: [];
+                        readonly input?: import("hono/utils/types").JSONValue;
+                        readonly discriminator?: string | undefined | undefined;
+                        readonly inclusive: false;
+                        readonly path: (string | number | null)[];
+                        readonly message: string;
+                    } | {
+                        readonly code: "invalid_key";
+                        readonly origin: "map" | "record";
+                        readonly issues: ({
+                            readonly code: "invalid_type";
+                            readonly expected: import("zod/v4/core").$ZodInvalidTypeExpected;
+                            readonly input?: import("hono/utils/types").JSONValue;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | {
+                            readonly code: "too_big";
+                            readonly origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file" | (string & {});
+                            readonly maximum: number;
+                            readonly inclusive?: boolean | undefined;
+                            readonly exact?: boolean | undefined;
+                            readonly input?: import("hono/utils/types").JSONValue;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | {
+                            readonly code: "too_small";
+                            readonly origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file" | (string & {});
+                            readonly minimum: number;
+                            readonly inclusive?: boolean | undefined;
+                            readonly exact?: boolean | undefined;
+                            readonly input?: import("hono/utils/types").JSONValue;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | {
+                            readonly code: "invalid_format";
+                            readonly format: import("zod/v4/core").$ZodStringFormats | (string & {});
+                            readonly pattern?: string | undefined;
+                            readonly input?: string | undefined;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | {
+                            readonly code: "not_multiple_of";
+                            readonly divisor: number;
+                            readonly input?: number | undefined;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | {
+                            readonly code: "unrecognized_keys";
+                            readonly keys: string[];
+                            readonly input?: {
+                                [x: string]: import("hono/utils/types").JSONValue;
+                            } | undefined;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | {
+                            readonly code: "invalid_union";
+                            readonly errors: ({
+                                readonly code: "invalid_type";
+                                readonly expected: import("zod/v4/core").$ZodInvalidTypeExpected;
+                                readonly input?: import("hono/utils/types").JSONValue;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | {
+                                readonly code: "too_big";
+                                readonly origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file" | (string & {});
+                                readonly maximum: number;
+                                readonly inclusive?: boolean | undefined;
+                                readonly exact?: boolean | undefined;
+                                readonly input?: import("hono/utils/types").JSONValue;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | {
+                                readonly code: "too_small";
+                                readonly origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file" | (string & {});
+                                readonly minimum: number;
+                                readonly inclusive?: boolean | undefined;
+                                readonly exact?: boolean | undefined;
+                                readonly input?: import("hono/utils/types").JSONValue;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | {
+                                readonly code: "invalid_format";
+                                readonly format: import("zod/v4/core").$ZodStringFormats | (string & {});
+                                readonly pattern?: string | undefined;
+                                readonly input?: string | undefined;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | {
+                                readonly code: "not_multiple_of";
+                                readonly divisor: number;
+                                readonly input?: number | undefined;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | {
+                                readonly code: "unrecognized_keys";
+                                readonly keys: string[];
+                                readonly input?: {
+                                    [x: string]: import("hono/utils/types").JSONValue;
+                                } | undefined;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | /*elided*/ any | {
+                                readonly code: "invalid_union";
+                                readonly errors: [];
+                                readonly input?: import("hono/utils/types").JSONValue;
+                                readonly discriminator?: string | undefined | undefined;
+                                readonly inclusive: false;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | /*elided*/ any | /*elided*/ any | {
+                                readonly code: "invalid_value";
+                                readonly values: (string | number | boolean | null)[];
+                                readonly input?: import("hono/utils/types").JSONValue;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            } | {
+                                readonly code: "custom";
+                                readonly params?: {
+                                    [x: string]: any;
+                                } | undefined;
+                                readonly input?: import("hono/utils/types").JSONValue;
+                                readonly path: (string | number | null)[];
+                                readonly message: string;
+                            })[][];
+                            readonly input?: import("hono/utils/types").JSONValue;
+                            readonly discriminator?: string | undefined | undefined;
+                            readonly inclusive?: true | undefined;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | {
+                            readonly code: "invalid_union";
+                            readonly errors: [];
+                            readonly input?: import("hono/utils/types").JSONValue;
+                            readonly discriminator?: string | undefined | undefined;
+                            readonly inclusive: false;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | /*elided*/ any | /*elided*/ any | {
+                            readonly code: "invalid_value";
+                            readonly values: (string | number | boolean | null)[];
+                            readonly input?: import("hono/utils/types").JSONValue;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        } | {
+                            readonly code: "custom";
+                            readonly params?: {
+                                [x: string]: any;
+                            } | undefined;
+                            readonly input?: import("hono/utils/types").JSONValue;
+                            readonly path: (string | number | null)[];
+                            readonly message: string;
+                        })[];
+                        readonly input?: import("hono/utils/types").JSONValue;
+                        readonly path: (string | number | null)[];
+                        readonly message: string;
+                    } | /*elided*/ any | {
+                        readonly code: "invalid_value";
+                        readonly values: (string | number | boolean | null)[];
+                        readonly input?: import("hono/utils/types").JSONValue;
+                        readonly path: (string | number | null)[];
+                        readonly message: string;
+                    } | {
+                        readonly code: "custom";
+                        readonly params?: {
+                            [x: string]: any;
+                        } | undefined;
+                        readonly input?: import("hono/utils/types").JSONValue;
+                        readonly path: (string | number | null)[];
+                        readonly message: string;
+                    })[];
+                    readonly input?: import("hono/utils/types").JSONValue;
+                    readonly path: (string | number | null)[];
+                    readonly message: string;
+                } | {
+                    readonly code: "invalid_value";
+                    readonly values: (string | number | boolean | null)[];
+                    readonly input?: import("hono/utils/types").JSONValue;
+                    readonly path: (string | number | null)[];
+                    readonly message: string;
+                } | {
+                    readonly code: "custom";
+                    readonly params?: {
+                        [x: string]: any;
+                    } | undefined;
+                    readonly input?: import("hono/utils/types").JSONValue;
+                    readonly path: (string | number | null)[];
+                    readonly message: string;
+                })[];
+            };
+            outputFormat: "json";
+            status: 400;
+        } | {
+            input: {
+                json: {
+                    tx_hash: string;
+                };
+            };
+            output: {
+                error: string;
+            };
+            outputFormat: "json";
+            status: 404;
+        } | {
+            input: {
+                json: {
+                    tx_hash: string;
+                };
+            };
+            output: {
+                error: string;
+            };
+            outputFormat: "json";
+            status: 409;
+        } | {
+            input: {
+                json: {
+                    tx_hash: string;
+                };
+            };
+            output: {
+                error: string;
+            };
+            outputFormat: "json";
+            status: 400;
+        } | {
+            input: {
+                json: {
+                    tx_hash: string;
+                };
+            };
+            output: {
+                error: string;
+            };
+            outputFormat: "json";
+            status: 403;
+        } | {
+            input: {
+                json: {
+                    tx_hash: string;
+                };
+            };
+            output: {
+                transaction_id: string;
+                payout_id: string;
+                action_id: `0x${string}`;
+                amount: string;
+            };
+            outputFormat: "json";
+            status: import("hono/utils/http-status").ContentfulStatusCode;
+        };
+    };
+}, "/user_claims"> | import("hono/types").MergeSchemaPath<{
+    "/": {
+        $get: {
+            input: {};
+            output: {
+                error: string;
+            };
+            outputFormat: "json";
+            status: 404;
+        } | {
+            input: {};
+            output: {
+                days: {
+                    date: string;
+                    checked_in: boolean;
+                }[];
+            };
+            outputFormat: "json";
+            status: import("hono/utils/http-status").ContentfulStatusCode;
+        };
+    };
+} & {
+    "/": {
+        $post: {
+            input: {};
+            output: {
+                error: string;
+            };
+            outputFormat: "json";
+            status: 404;
+        } | {
+            input: {};
+            output: {
+                error: string;
+            };
+            outputFormat: "json";
+            status: 409;
+        } | {
+            input: {};
+            output: {
+                check_in_id: string;
+                energy_granted: number;
+                streak: number;
+                mystery_box_item_id: string | null;
+            };
+            outputFormat: "json";
+            status: import("hono/utils/http-status").ContentfulStatusCode;
+        };
+    };
+}, "/checkin"> | import("hono/types").MergeSchemaPath<{
+    "/": {
+        $get: {
+            input: {};
+            output: {
+                error: string;
+            };
+            outputFormat: "json";
+            status: 404;
+        } | {
+            input: {};
+            output: {
+                yesterday: {
+                    top: {
+                        reward: string | null;
+                        user_id: string;
+                        name: string;
+                        address: string;
+                        total_score: number;
+                        rank: number;
+                    }[];
+                    my_rank: {
+                        reward: string | null;
+                        user_id: string;
+                        name: string;
+                        address: string;
+                        total_score: number;
+                        rank: number;
+                    } | null;
+                };
+                today: {
+                    top: {
+                        user_id: string;
+                        name: string;
+                        address: string;
+                        total_score: number;
+                        rank: number;
+                    }[];
+                    my_rank: {
+                        user_id: string;
+                        name: string;
+                        address: string;
+                        total_score: number;
+                        rank: number;
+                    } | null;
+                };
+                overall: {
+                    top: {
+                        user_id: string;
+                        name: string;
+                        address: string;
+                        total_score: number;
+                        rank: number;
+                    }[];
+                    my_rank: {
+                        user_id: string;
+                        name: string;
+                        address: string;
+                        total_score: number;
+                        rank: number;
+                    } | null;
+                };
+            };
+            outputFormat: "json";
+            status: import("hono/utils/http-status").ContentfulStatusCode;
+        };
+    };
+}, "/leaderboard">, "/", "/health">;
 export type AppType = typeof app;
 export declare function startWebServer(): Promise<void>;
 export {};
