@@ -158,7 +158,7 @@ export default function App() {
           <GameScreen onExit={handleExitGame} audio={audio} gamePlayId={gamePlayId} address={address} />
         )}
         {screen === 'leaderboard' && (
-          <LeaderboardScreen onGoHome={handleGoHome} />
+          <LeaderboardScreen onGoHome={handleGoHome} address={address} user={user} />
         )}
         {screen === 'profile' && (
           <ProfileScreen audio={audio} onToggleMute={handleToggleMute} onGoHome={handleGoHome} address={address} />
