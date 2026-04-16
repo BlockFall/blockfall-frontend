@@ -294,7 +294,7 @@ export default function HomeScreen({
         </div>
 
         <p style={{ color: COLORS.deepSpace, opacity: 0.5, fontSize: 14, marginBottom: 48, letterSpacing: 0.5 }}>
-          Stack, clear, survive.
+          Stack, Sweep, Survive.
         </p>
 
         {/* CTA based on auth state */}
@@ -507,6 +507,72 @@ export default function HomeScreen({
             Welcome back, {user.name}!
           </div>
         )}
+      </div>
+
+      {/* Footer bar */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          zIndex: 5,
+          background: 'rgba(255,255,255,0.85)',
+          backdropFilter: 'blur(8px)',
+          borderTop: `1px solid ${COLORS.deepSpace}1a`,
+          padding: '8px 14px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 8,
+          flexWrap: 'wrap',
+        }}
+      >
+        <span
+          style={{
+            fontSize: 11,
+            fontWeight: 700,
+            color: COLORS.deepSpace,
+            opacity: 0.6,
+            letterSpacing: 0.3,
+          }}
+        >
+          Operated by Blockfall
+        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <button
+            onClick={() => onNavigate('privacy')}
+            style={{
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              cursor: 'pointer',
+              fontSize: 11,
+              fontWeight: 700,
+              color: COLORS.blueGreen,
+              letterSpacing: 0.3,
+              textDecoration: 'underline',
+            }}
+          >
+            Privacy Policy
+          </button>
+          <button
+            onClick={() => onNavigate('terms')}
+            style={{
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              cursor: 'pointer',
+              fontSize: 11,
+              fontWeight: 700,
+              color: COLORS.blueGreen,
+              letterSpacing: 0.3,
+              textDecoration: 'underline',
+            }}
+          >
+            Terms of Service
+          </button>
+        </div>
       </div>
 
       {showSignUpModal && (

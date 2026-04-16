@@ -8,6 +8,8 @@ import ProfileScreen from './screens/ProfileScreen';
 import ShopScreen from './screens/ShopScreen';
 import DailyCheckinScreen from './screens/DailyCheckinScreen';
 import HelpGuideScreen from './screens/HelpGuideScreen';
+import PrivacyPolicyScreen from './screens/PrivacyPolicyScreen';
+import TermsOfServiceScreen from './screens/TermsOfServiceScreen';
 import { useAudio } from './audio/useAudio';
 import { usePlayGame } from './hooks/usePlayGame';
 import { useAuth } from './hooks/useAuth';
@@ -177,6 +179,12 @@ export default function App() {
         )}
         {screen === 'helpguide' && (
           <HelpGuideScreen onGoHome={handleGoHome} />
+        )}
+        {screen === 'privacy' && (
+          <PrivacyPolicyScreen onGoHome={handleGoHome} />
+        )}
+        {screen === 'terms' && (
+          <TermsOfServiceScreen onGoHome={handleGoHome} />
         )}
       </div>
 
