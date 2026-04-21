@@ -4,7 +4,7 @@ export const USDC_ADDRESS = '0xcebA9300f2b948710d2653dD7B07f33A8B32118C';
 export const USDm_ADDRESS = '0x765DE816845861e75A25fCA122bb6898B8B1282a';
 
 export const PAYMENT_TOKENS = {
-  1: { address: USDT_ADDRESS, symbol: 'USDT' },
-  2: { address: USDC_ADDRESS, symbol: 'USDC' },
-  3: { address: USDm_ADDRESS, symbol: 'USDm' },
+  1: { address: USDT_ADDRESS, symbol: 'USDT', decimals: 6 },
+  2: { address: USDC_ADDRESS, symbol: 'USDC', decimals: 6 },
+  3: { address: USDm_ADDRESS, symbol: 'USDm', decimals: 18 },
 };

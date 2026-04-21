@@ -8,12 +8,22 @@ import {
   USDT_ADDRESS,
   USDC_ADDRESS,
   USDm_ADDRESS,
+  PAYMENT_TOKENS,
 } from '../constants.js';
 import { getAuthedApi } from '../api.js';
 
 // txStatus: null | 'awaiting_wallet' | 'confirming' | 'rejected' | 'error' | 'success'
 
 const EXTRA_BALANCE_USD = 0.01;
+
+function get18DecimalsNormalized(amount, decimals) {
+  if (decimals === 18) return amount;
+  if (decimals < 18) {
+    return amount * 10n ** BigInt(18 - decimals);
+  } else {
+    return amount / 10n ** BigInt(decimals - 18);
+  }
+}
 
 export function usePlayGame() {
   const { address } = useAccount();
@@ -27,38 +37,28 @@ export function usePlayGame() {
     setTxStatus('awaiting_wallet');
     try {
       // 1. Fetch balances and decimals for all three stablecoins (priority order: USDT > USDC > USDm)
-      const tokens = [
-        { address: USDT_ADDRESS },
-        { address: USDC_ADDRESS },
-        { address: USDm_ADDRESS },
-      ];
+      const tokens = [PAYMENT_TOKENS[1], PAYMENT_TOKENS[2], PAYMENT_TOKENS[3]]; // USDT, USDC, USDm
+      const decimals = tokens.map((t) => t.decimals);
 
-      const [balances, decimals] = await Promise.all([
-        Promise.all(
-          tokens.map((t) =>
-            publicClient.readContract({
-              address: t.address,
-              abi: erc20Abi,
-              functionName: 'balanceOf',
-              args: [address],
-            })
-          )
-        ),
-        Promise.all(
-          tokens.map((t) =>
-            publicClient.readContract({
-              address: t.address,
-              abi: erc20Abi,
-              functionName: 'decimals',
-            })
-          )
-        ),
-      ]);
+      const balances = await Promise.all(
+        tokens.map((t) =>
+          publicClient.readContract({
+            address: t.address,
+            abi: erc20Abi,
+            functionName: 'balanceOf',
+            args: [address],
+          })
+        )
+      );
 
       // 2. Select the token with the highest balance (priority order breaks ties: USDT > USDC > USDm)
       let selectedIndex = 0;
       for (let i = 1; i < balances.length; i++) {
-        if (balances[i] > balances[selectedIndex]) selectedIndex = i;
+        const normalizedBalance = get18DecimalsNormalized(balances[i], decimals[i]);
+        const normalizedSelectedBalance = get18DecimalsNormalized(balances[selectedIndex], decimals[selectedIndex]);
+        if (normalizedBalance > normalizedSelectedBalance) {
+          selectedIndex = i;
+        }
       }
 
       const selectedToken = tokens[selectedIndex].address;
@@ -73,7 +73,7 @@ export function usePlayGame() {
 
       // 4. Check if best balance meets price + 1 cent
       const bestDecimals = decimals[selectedIndex];
-      const extraAmount = BigInt(Math.round(EXTRA_BALANCE_USD * 10 ** Number(bestDecimals)));
+      const extraAmount = BigInt(Math.round(EXTRA_BALANCE_USD * 1000)) * 10n ** (BigInt(bestDecimals) - 3n);
       if (balances[selectedIndex] < price + extraAmount) {
         setTxStatus(null);
         setBalanceError('Not enough balance');
@@ -141,6 +141,12 @@ export function usePlayGame() {
       if (isRejection) {
         setTxStatus('rejected');
       } else {
+        console.log('Transaction error', err);
+        console.log('Error details', {
+          message: err?.message,
+          code: err?.code,
+          stack: err?.stack,
+        });
         setTxStatus('error');
       }
       return false;
