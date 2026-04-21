@@ -12,6 +12,7 @@ const SHOP_ITEMS = [
     price: '7¢',
     color: COLORS.amber,
     amount: 10,
+    isBuyable: true,
   },
   {
     id: 'energy25',
@@ -23,6 +24,7 @@ const SHOP_ITEMS = [
     color: COLORS.orange,
     amount: 25,
     badge: 'Popular',
+    isBuyable: true,
   },
   {
     id: 'energy50',
@@ -34,6 +36,7 @@ const SHOP_ITEMS = [
     color: COLORS.blueGreen,
     amount: 50,
     badge: 'Best Value',
+    isBuyable: true,
   },
   {
     id: 'mysterybox',
@@ -44,6 +47,7 @@ const SHOP_ITEMS = [
     price: '20¢',
     color: COLORS.brightMarine,
     amount: null,
+    isBuyable: false,
   },
 ];
 
@@ -195,25 +199,39 @@ function ShopItemCard({ item, buying, disabled, onBuy }) {
 
       {/* Price + button */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0 }}>
-        <div style={{ fontSize: 18, fontWeight: 900, color: item.color }}>{item.price}</div>
-        <button
-          onClick={onBuy}
-          disabled={disabled}
-          style={{
-            background: `linear-gradient(135deg, ${item.color}, ${item.color}bb)`,
-            color: 'white',
-            border: 'none',
-            borderRadius: 10,
-            padding: '6px 14px',
-            fontSize: 11,
-            fontWeight: 700,
-            cursor: disabled ? 'not-allowed' : 'pointer',
-            opacity: disabled ? 0.65 : 1,
-            letterSpacing: 0.3,
-          }}
-        >
-          {buying ? 'Buying...' : 'Buy'}
-        </button>
+        {item.isBuyable ? (
+          <>
+          <div style={{ fontSize: 18, fontWeight: 900, color: item.color }}>{item.price}</div>
+          <button
+            onClick={onBuy}
+            disabled={disabled}
+            style={{
+              background: `linear-gradient(135deg, ${item.color}, ${item.color}bb)`,
+              color: 'white',
+              border: 'none',
+              borderRadius: 10,
+              padding: '6px 14px',
+              fontSize: 11,
+              fontWeight: 700,
+              cursor: disabled ? 'not-allowed' : 'pointer',
+              opacity: disabled ? 0.65 : 1,
+              letterSpacing: 0.3,
+            }}
+          >
+            {buying ? 'Buying...' : 'Buy'}
+          </button>
+        </>
+        ) : (
+          <span style={{
+              fontSize: 12,
+              fontWeight: 600,
+              color: COLORS.deepSpace,
+            }}
+          >
+            Coming Soon
+          </span>
+
+        )}
       </div>
     </div>
   );

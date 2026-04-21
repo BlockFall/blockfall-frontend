@@ -7,17 +7,6 @@ import { COLORS } from '../game/constants';
 
 const FLOAT_BUTTONS_ALWAYS = [
   {
-    id: 'leaderboard',
-    label: 'Ranks',
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-        <rect x="2" y="11" width="5" height="10" rx="1" fill={COLORS.amber} />
-        <rect x="9.5" y="6" width="5" height="15" rx="1" fill={COLORS.amber} />
-        <rect x="17" y="3" width="5" height="18" rx="1" fill={COLORS.amber} />
-      </svg>
-    ),
-  },
-  {
     id: 'helpguide',
     label: 'Help',
     icon: (
@@ -166,45 +155,6 @@ export default function HomeScreen({
           gap: 8,
         }}
       >
-        {isSignedIn && (
-          <div
-            style={{
-              background: 'white',
-              borderRadius: 14,
-              padding: '8px 14px',
-              boxShadow: '0 4px 16px rgba(2,48,71,0.10)',
-              border: `2px solid ${noEnergy ? '#ef4444' : COLORS.amber}33`,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-            }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill={noEnergy ? '#ef4444' : COLORS.amber}>
-              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-            </svg>
-            <span
-              style={{
-                fontSize: 14,
-                fontWeight: 800,
-                color: noEnergy ? '#ef4444' : COLORS.deepSpace,
-                letterSpacing: 0.5,
-              }}
-            >
-              {energy} / 10
-            </span>
-            <span
-              style={{
-                fontSize: 10,
-                fontWeight: 600,
-                color: noEnergy ? '#ef4444' : COLORS.deepSpace,
-                opacity: 0.5,
-              }}
-            >
-              energy
-            </span>
-          </div>
-        )}
-
         {/* Wallet address badge */}
         {isConnected && address && (
           <div
@@ -238,6 +188,46 @@ export default function HomeScreen({
               }}
             >
               {shortenAddress(address)}
+            </span>
+          </div>
+        )}
+        {isSignedIn && (
+          <div
+            style={{
+              background: 'white',
+              borderRadius: 14,
+              padding: '8px 14px',
+              boxShadow: '0 4px 16px rgba(2,48,71,0.10)',
+              border: `2px solid ${noEnergy ? '#ef4444' : COLORS.amber}33`,
+              display: 'flex',
+              alignItems: 'center',
+              width: 'fit-content',
+              gap: 6,
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill={noEnergy ? '#ef4444' : COLORS.amber}>
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+            </svg>
+            <span
+              style={{
+                fontSize: 14,
+                fontWeight: 800,
+                color: noEnergy ? '#ef4444' : COLORS.deepSpace,
+                letterSpacing: 0.5,
+              }}
+            >
+              {energy}
+            </span>
+                        
+            <span
+              style={{
+                fontSize: 12,
+                fontWeight: 600,
+                color: noEnergy ? '#ef4444' : COLORS.deepSpace,
+                opacity: 0.5,
+              }}
+            >
+              Energy
             </span>
           </div>
         )}
