@@ -1,6 +1,16 @@
 import { COLORS } from '../game/constants';
 import BackButton from '../components/BackButton';
 
+const TELEGRAM_SUPPORT_URL = 'https://t.me/blockfall_support_bot';
+
+function TelegramIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+      <path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z" />
+    </svg>
+  );
+}
+
 const SECTIONS = [
   {
     icon: '🧩',
@@ -66,6 +76,28 @@ export default function HelpGuideScreen({ onGoHome }) {
       >
         <BackButton onGoHome={onGoHome} />
         <span style={{ fontSize: 18, fontWeight: 800, color: COLORS.deepSpace }}>Help Guide</span>
+        <a
+          href={TELEGRAM_SUPPORT_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            marginLeft: 'auto',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '8px 12px',
+            borderRadius: 999,
+            background: 'linear-gradient(135deg, #229ED9, #1b86b8)',
+            color: 'white',
+            fontSize: 13,
+            fontWeight: 700,
+            textDecoration: 'none',
+            boxShadow: '0 2px 6px rgba(34,158,217,0.35)',
+          }}
+        >
+          <TelegramIcon />
+          Support
+        </a>
       </div>
 
       <div style={{ padding: '16px 16px 28px', display: 'flex', flexDirection: 'column', gap: 14 }}>
