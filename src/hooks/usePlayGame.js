@@ -122,10 +122,18 @@ export function usePlayGame() {
         throw new Error('Buy transaction reverted');
       }
 
-      // 7. Submit tx_hash to backend for verification
+      // 7. Submit tx_hash to backend for verification (retry up to 3 times)
       const authedApi = getAuthedApi(address);
       if (authedApi) {
-        await authedApi.purchase.submit.$post({ json: { tx_hash: buyTxHash } });
+        for (let attempt = 0; attempt < 3; attempt++) {
+          try {
+            await authedApi.purchase.submit.$post({ json: { tx_hash: buyTxHash } });
+            break;
+          } catch (submitErr) {
+            if (attempt === 2) throw submitErr;
+            await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+          }
+        }
       }
 
       setTxStatus('success');

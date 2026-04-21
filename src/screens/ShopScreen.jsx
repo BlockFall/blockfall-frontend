@@ -53,6 +53,7 @@ const SHOP_ITEMS = [
 
 export default function ShopScreen({ onGoHome, onAddEnergy, buyItem, balanceError, resetBalanceError }) {
   const [buyingId, setBuyingId] = useState(null);
+  const [successItem, setSuccessItem] = useState(null);
 
   async function handleBuy(item) {
     if (buyingId) return;
@@ -61,6 +62,7 @@ export default function ShopScreen({ onGoHome, onAddEnergy, buyItem, balanceErro
     const success = await buyItem(item.itemTypeId);
     setBuyingId(null);
     if (success) {
+      setSuccessItem(item);
       onAddEnergy();
     }
   }
@@ -88,6 +90,26 @@ export default function ShopScreen({ onGoHome, onAddEnergy, buyItem, balanceErro
       >
         <BackButton onGoHome={onGoHome} />
         <span style={{ fontSize: 18, fontWeight: 800, color: COLORS.deepSpace }}>Shop</span>
+      </div>
+
+      {/* Info box */}
+      <div
+        style={{
+          margin: '16px 16px 4px',
+          background: '#e0f2fe',
+          border: '1.5px solid #7dd3fc',
+          borderRadius: 12,
+          padding: '10px 14px',
+          fontSize: 12,
+          color: '#0c4a6e',
+          fontWeight: 600,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+        }}
+      >
+        <span style={{ fontSize: 16 }}>ℹ️</span>
+        You can buy energy to increase games played
       </div>
 
       {/* Balance error */}
@@ -123,6 +145,79 @@ export default function ShopScreen({ onGoHome, onAddEnergy, buyItem, balanceErro
           />
         ))}
       </div>
+
+      {/* Success popup */}
+      {successItem && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 900,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(2,48,71,0.55)',
+            backdropFilter: 'blur(4px)',
+          }}
+        >
+          <div
+            style={{
+              background: 'white',
+              borderRadius: 24,
+              padding: '40px 36px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 20,
+              minWidth: 280,
+              maxWidth: 340,
+              boxShadow: '0 24px 64px rgba(2,48,71,0.2)',
+            }}
+          >
+            <div
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: '50%',
+                background: '#dcfce7',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 28,
+              }}
+            >
+              ✅
+            </div>
+            <p
+              style={{
+                margin: 0,
+                fontSize: 16,
+                fontWeight: 700,
+                color: '#0f172a',
+                textAlign: 'center',
+                lineHeight: 1.4,
+              }}
+            >
+              You have bought {successItem.amount} energy. You can play more.
+            </p>
+            <button
+              onClick={() => setSuccessItem(null)}
+              style={{
+                background: `linear-gradient(135deg, ${COLORS.blueGreen}, ${COLORS.blueGreen}bb)`,
+                color: 'white',
+                border: 'none',
+                borderRadius: 12,
+                padding: '12px 28px',
+                fontSize: 15,
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
