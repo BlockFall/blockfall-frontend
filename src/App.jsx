@@ -85,6 +85,15 @@ export default function App() {
     }
   }, [energy, audio, startPlay, callGameStart, refreshUser]);
 
+  const handlePlayAgain = useCallback(async () => {
+    const playId = await callGameStart();
+    if (playId) {
+      setGamePlayId(playId);
+      return playId;
+    }
+    return null;
+  }, [callGameStart]);
+
   const handleExitGame = useCallback(() => {
     setScreen('home');
     refreshUser();
@@ -157,7 +166,7 @@ export default function App() {
           />
         )}
         {screen === 'game' && (
-          <GameScreen onExit={handleExitGame} audio={audio} gamePlayId={gamePlayId} address={address} />
+          <GameScreen onExit={handleExitGame} onPlayAgain={handlePlayAgain} audio={audio} gamePlayId={gamePlayId} address={address} />
         )}
         {screen === 'leaderboard' && (
           <LeaderboardScreen onGoHome={handleGoHome} address={address} user={user} />

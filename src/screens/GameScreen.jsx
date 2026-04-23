@@ -35,7 +35,7 @@ function drawCell(ctx, x, y, cell, color, alpha = 1) {
   ctx.restore();
 }
 
-export default function GameScreen({ onExit, audio, gamePlayId, address }) {
+export default function GameScreen({ onExit, onPlayAgain, audio, gamePlayId, address }) {
   const canvasRef = useRef(null);
   const areaRef   = useRef(null);   // canvas container — measured for sizing
   const cellRef   = useRef(28);     // current cell size, used by all game functions
@@ -589,7 +589,10 @@ export default function GameScreen({ onExit, audio, gamePlayId, address }) {
                 <div style={{ fontSize: 34, fontWeight: 900, color: 'white', lineHeight: 1.2 }}>{score.toLocaleString()}</div>
                 <div style={{ fontSize: 11, color: COLORS.amber, marginTop: 2 }}>{lines} LINES CLEARED</div>
               </div>
-              <OverlayBtn onClick={startGame} color={COLORS.orange}>PLAY AGAIN</OverlayBtn>
+              <OverlayBtn onClick={async () => {
+                const playId = await onPlayAgain();
+                if (playId) startGame();
+              }} color={COLORS.orange}>PLAY AGAIN</OverlayBtn>
               <OverlayBtn onClick={onExit} color={COLORS.blueGreen} mt>HOME</OverlayBtn>
             </Overlay>
           )}
