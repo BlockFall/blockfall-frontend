@@ -354,7 +354,7 @@ export default function HomeScreen({
               marginBottom: 32,
             }}
           >
-            {noEnergy ? 'BUY & PLAY' : 'PLAY'}
+            {noEnergy ? 'PLAY (0.01$)' : 'PLAY'}
             <span style={{
               position: 'absolute', top: 0, left: '-100%', width: '60%', height: '100%',
               background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent)',
