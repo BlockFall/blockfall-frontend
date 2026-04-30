@@ -1,0 +1,32 @@
+import type { Chain, GetTransactionReceiptReturnType } from 'viem';
+export declare function getTransactionReceipt(hash: `0x${string}`): Promise<GetTransactionReceiptReturnType<Chain>>;
+export declare function getBlock(blockNumber: bigint): Promise<{
+    number: bigint;
+    nonce: `0x${string}`;
+    hash: `0x${string}`;
+    logsBloom: `0x${string}`;
+    baseFeePerGas: bigint | null;
+    blobGasUsed: bigint;
+    difficulty: bigint;
+    excessBlobGas: bigint;
+    extraData: import("viem").Hex;
+    gasLimit: bigint;
+    gasUsed: bigint;
+    miner: import("viem").Address;
+    mixHash: import("viem").Hash;
+    parentBeaconBlockRoot?: `0x${string}` | undefined | undefined;
+    parentHash: import("viem").Hash;
+    receiptsRoot: import("viem").Hex;
+    sealFields: import("viem").Hex[];
+    sha3Uncles: import("viem").Hash;
+    size: bigint;
+    stateRoot: import("viem").Hash;
+    timestamp: bigint;
+    totalDifficulty: bigint | null;
+    transactionsRoot: import("viem").Hash;
+    uncles: import("viem").Hash[];
+    withdrawals?: import("viem").Withdrawal[] | undefined | undefined | undefined;
+    withdrawalsRoot?: `0x${string}` | undefined | undefined;
+    transactions: `0x${string}`[];
+}>;
+//# sourceMappingURL=celo-rpc-reader.d.ts.map

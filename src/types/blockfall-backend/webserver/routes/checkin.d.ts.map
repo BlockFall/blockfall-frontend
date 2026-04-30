@@ -1,1 +1,1 @@
-{"version":3,"file":"checkin.d.ts","sourceRoot":"","sources":["../../../../src/webserver/routes/checkin.ts"],"names":[],"mappings":"AAMA,OAAO,EAAkB,KAAK,OAAO,EAAE,MAAM,uBAAuB,CAAC;AAErE,eAAO,MAAM,aAAa;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;YAgCtB,CAAC"}
+{"version":3,"file":"checkin.d.ts","sourceRoot":"","sources":["../../../../src/webserver/routes/checkin.ts"],"names":[],"mappings":"AAGA,OAAO,EAAkB,KAAK,OAAO,EAAE,MAAM,uBAAuB,CAAC;AAErE,eAAO,MAAM,aAAa;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;YAgCtB,CAAC"}

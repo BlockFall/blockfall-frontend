@@ -1,4 +1,5 @@
 import { z } from 'zod';
+export declare const nameSchema: z.ZodString;
 /**
  * Auth routes — mount at /auth
  *
@@ -1267,6 +1268,8 @@ export declare const authRoutes: import("hono/hono-base").HonoBase<import("hono/
                     message: string;
                     signature: string;
                     name: string;
+                    user_source: "mobile-web" | "web" | "minipay";
+                    wallet_info: string;
                 };
             };
             output: {
@@ -2468,6 +2471,8 @@ export declare const authRoutes: import("hono/hono-base").HonoBase<import("hono/
                     message: string;
                     signature: string;
                     name: string;
+                    user_source: "mobile-web" | "web" | "minipay";
+                    wallet_info: string;
                 };
             };
             output: {
@@ -2481,6 +2486,8 @@ export declare const authRoutes: import("hono/hono-base").HonoBase<import("hono/
                     message: string;
                     signature: string;
                     name: string;
+                    user_source: "mobile-web" | "web" | "minipay";
+                    wallet_info: string;
                 };
             };
             output: {
@@ -2494,6 +2501,8 @@ export declare const authRoutes: import("hono/hono-base").HonoBase<import("hono/
                     message: string;
                     signature: string;
                     name: string;
+                    user_source: "mobile-web" | "web" | "minipay";
+                    wallet_info: string;
                 };
             };
             output: {

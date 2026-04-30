@@ -2,11 +2,11 @@ export interface JwtPayload {
     address: string;
     chainId: number;
 }
-export type AuthEnv = {
+export interface AuthEnv {
     Variables: {
         user: JwtPayload;
     };
-};
+}
 /**
  * Requires a valid Bearer JWT issued by POST /auth/verify.
  * On success, sets c.var.user = { address, chainId }.

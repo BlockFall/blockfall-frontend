@@ -1,9 +1,12 @@
+export type UserSource = 'mobile-web' | 'web' | 'minipay';
 export interface UserRow {
     user_id: string;
     address: string;
+    user_source: UserSource;
+    wallet_info: string;
     name: string;
+    is_banned: boolean;
     created_at: Date;
-    updated_at: Date | null;
 }
 export type UserWithNumbersRow = UserRow & {
     best_score: number;
@@ -23,9 +26,32 @@ export interface UserItemRow {
     buy_date: Date | null;
 }
 export declare function getUserInventory(userId: string): Promise<UserItemRow[]>;
+export type CreateUserResult = {
+    success: true;
+    user: UserRow;
+} | {
+    success: false;
+    reason: 'name_taken';
+};
 /**
- * Creates a user + user_numbers (with initial energy) + energy_issuance record
- * in a single transaction. Throws postgres error '23505' on duplicate address/name.
+ * Creates a user + initial user_mutable_data + user_numbers (with initial energy)
+ * + energy_issuance record in a single transaction. Name uniqueness is checked
+ * against the latest user_mutable_data row of every other user, serialized via
+ * a transaction-scoped advisory lock keyed on the name. The unique constraint
+ * on users.address still throws postgres error '23505' on duplicate address.
  */
-export declare function createUser(address: string, name: string): Promise<UserRow>;
+export declare function createUser(address: string, name: string, userSource: UserSource, walletInfo: string): Promise<CreateUserResult>;
+export type RenameResult = {
+    success: true;
+} | {
+    success: false;
+    reason: 'name_taken' | 'user_not_found' | 'no_change';
+};
+/**
+ * Inserts a new user_mutable_data row with the given name, preserving the
+ * latest is_banned flag. Uniqueness is checked against the latest name of
+ * every other user inside the same transaction; a transaction-scoped advisory
+ * lock keyed on the name serializes concurrent renames to the same target.
+ */
+export declare function renameUser(address: string, newName: string): Promise<RenameResult>;
 //# sourceMappingURL=users.d.ts.map

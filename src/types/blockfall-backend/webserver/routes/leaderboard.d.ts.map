@@ -1,1 +1,1 @@
-{"version":3,"file":"leaderboard.d.ts","sourceRoot":"","sources":["../../../../src/webserver/routes/leaderboard.ts"],"names":[],"mappings":"AAUA,OAAO,EAAkB,KAAK,OAAO,EAAE,MAAM,uBAAuB,CAAC;AAYrE,eAAO,MAAM,iBAAiB;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;YAkC1B,CAAC"}
+{"version":3,"file":"leaderboard.d.ts","sourceRoot":"","sources":["../../../../src/webserver/routes/leaderboard.ts"],"names":[],"mappings":"AAUA,OAAO,EAAkB,KAAK,OAAO,EAAE,MAAM,uBAAuB,CAAC;AAYrE,eAAO,MAAM,iBAAiB;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;YA4B5B,CAAC"}
