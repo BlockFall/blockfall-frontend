@@ -1,6 +1,16 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAccount, useWalletClient } from 'wagmi'
+import { useWalletInfo } from '@reown/appkit/react'
 import { api, getAuthedApi, tokenKey } from '../api.js'
+
+function isMiniPay() {
+  return typeof window !== 'undefined' && !!window.ethereum?.isMiniPay
+}
+
+function isMobileBrowser() {
+  if (typeof navigator === 'undefined') return false
+  return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+}
 
 // authStatus: 'loading' | 'no_wallet' | 'signed_in' | 'registered' | 'not_registered'
 // - loading: checking wallet/token state
@@ -10,8 +20,9 @@ import { api, getAuthedApi, tokenKey } from '../api.js'
 // - not_registered: wallet connected, user not registered
 
 export function useAuth() {
-  const { address, isConnected } = useAccount()
+  const { address, isConnected, connector } = useAccount()
   const { data: walletClient } = useWalletClient()
+  const { walletInfo } = useWalletInfo()
   const [authStatus, setAuthStatus] = useState('loading')
   const [user, setUser] = useState(null)
   const [authError, setAuthError] = useState(null)
@@ -147,7 +158,21 @@ export function useAuth() {
       const signature = await walletClient.signMessage({ account: address, message })
 
       // 4. Signup
-      const signupRes = await api.auth.signup.$post({ json: { message, signature, name } })
+      const minipay = isMiniPay()
+      const user_source = minipay ? 'minipay' : isMobileBrowser() ? 'mobile-web' : 'web'
+      let wallet_info
+      if (minipay) {
+        wallet_info = 'minipay'
+      } else {
+        const connectorId = connector?.id ?? 'unknown'
+        const extra = walletInfo
+          ? ` | ${walletInfo.name ?? ''}${walletInfo.type ? ` (${walletInfo.type})` : ''}`.trimEnd()
+          : ''
+        wallet_info = `${connectorId}${extra}`
+      }
+      const signupRes = await api.auth.signup.$post({
+        json: { message, signature, name, user_source, wallet_info },
+      })
       if (!signupRes.ok) {
         const err = await signupRes.json()
         throw new Error(err.error || 'Sign up failed')
@@ -165,7 +190,7 @@ export function useAuth() {
     } catch (err) {
       setAuthError(err.message || 'Sign up failed')
     }
-  }, [walletClient, address])
+  }, [walletClient, address, connector, walletInfo])
 
   const signOut = useCallback(() => {
     if (address) localStorage.removeItem(tokenKey(address))
