@@ -8,6 +8,7 @@ import { PAYMENT_TOKENS } from '../constants';
 import erc20Abi from '../abis/erc20.abi.js';
 import { useClaim } from '../hooks/useClaim';
 import { TxOverlay, Toast } from '../components/TxOverlay';
+import SignUpModal from '../components/SignUpModal';
 
 const ITEM_TYPE_LABELS = {
   5: { name: 'Mystery Box Item', icon: '🎁' },
@@ -19,11 +20,12 @@ const PAYOUT_TYPE_LABELS = {
   mystery_box: { name: 'Mystery Box', icon: '🎁' },
 };
 
-export default function ProfileScreen({ audio, onToggleMute, onGoHome, address }) {
+export default function ProfileScreen({ audio, onToggleMute, onGoHome, address, checkName, onRename }) {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showRejectedToast, setShowRejectedToast] = useState(false);
+  const [showRenameModal, setShowRenameModal] = useState(false);
   const publicClient = usePublicClient();
   const { claim, txStatus, claimingId, resetTxStatus } = useClaim();
 
@@ -69,6 +71,14 @@ export default function ProfileScreen({ audio, onToggleMute, onGoHome, address }
     (pendingClaim) => claim(pendingClaim),
     [claim]
   );
+
+  const handleRenameSubmit = useCallback(async (name) => {
+    const ok = await onRename(name);
+    if (ok) {
+      setShowRenameModal(false);
+      fetchProfile();
+    }
+  }, [onRename, fetchProfile]);
 
   return (
     <div
@@ -149,7 +159,28 @@ export default function ProfileScreen({ audio, onToggleMute, onGoHome, address }
             >
               🎮
             </div>
-            <div style={{ fontSize: 22, fontWeight: 800, color: COLORS.deepSpace }}>{profile.name}</div>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ fontSize: 22, fontWeight: 800, color: COLORS.deepSpace }}>{profile.name}</div>
+              <button
+                onClick={() => setShowRenameModal(true)}
+                title="Edit name"
+                style={{
+                  background: COLORS.skyBlue + '33',
+                  border: 'none',
+                  borderRadius: 10,
+                  padding: 8,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={COLORS.deepSpace} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+                </svg>
+              </button>
+            </div>
           </div>
 
           {/* Stats grid */}
@@ -229,6 +260,18 @@ export default function ProfileScreen({ audio, onToggleMute, onGoHome, address }
       <TxOverlay txStatus={txStatus} onClose={resetTxStatus} />
       {showRejectedToast && (
         <Toast message="You have rejected" onDone={() => setShowRejectedToast(false)} />
+      )}
+      {showRenameModal && profile && (
+        <SignUpModal
+          onSubmit={handleRenameSubmit}
+          onClose={() => setShowRenameModal(false)}
+          checkName={checkName}
+          title="Change Your Name"
+          subtitle="Pick a new unique name for the leaderboard"
+          submitLabel="Save"
+          submittingLabel="Saving..."
+          currentName={profile.name}
+        />
       )}
     </div>
   );

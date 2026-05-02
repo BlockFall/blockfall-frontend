@@ -26,7 +26,7 @@ export default function App() {
   const prevAddressRef = useRef(address);
   const { reconnect } = useReconnect();
   const { startPlay, buyItem, txStatus, resetTxStatus, balanceError, resetBalanceError } = usePlayGame();
-  const { authStatus, user, authError, signIn, signUp, signOut, checkName, refreshUser } = useAuth();
+  const { authStatus, user, authError, signIn, signUp, signOut, checkName, refreshUser, rename } = useAuth();
 
   const energy = user?.stats?.energy ?? 0;
 
@@ -172,7 +172,14 @@ export default function App() {
           <LeaderboardScreen onGoHome={handleGoHome} address={address} user={user} />
         )}
         {screen === 'profile' && (
-          <ProfileScreen audio={audio} onToggleMute={handleToggleMute} onGoHome={handleGoHome} address={address} />
+          <ProfileScreen
+            audio={audio}
+            onToggleMute={handleToggleMute}
+            onGoHome={handleGoHome}
+            address={address}
+            checkName={checkName}
+            onRename={rename}
+          />
         )}
         {screen === 'shop' && (
           <ShopScreen

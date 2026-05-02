@@ -1,4 +1,4 @@
-import { createAppKit } from '@reown/appkit';
+import { createAppKit } from '@reown/appkit/react';
 import { WagmiAdapter } from '@reown/appkit-adapter-wagmi';
 import { celo } from '@reown/appkit/networks';
 

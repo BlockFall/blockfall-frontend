@@ -208,6 +208,26 @@ export function useAuth() {
     }
   }, [])
 
+  const rename = useCallback(async (name) => {
+    if (!address) return false
+    const authedApi = getAuthedApi(address)
+    if (!authedApi) return false
+    setAuthError(null)
+    try {
+      const res = await authedApi.user.rename.$post({ json: { name } })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || 'Rename failed')
+      }
+      const userRes = await authedApi.user.$get()
+      if (userRes.ok) setUser(await userRes.json())
+      return true
+    } catch (err) {
+      setAuthError(err.message || 'Rename failed')
+      return false
+    }
+  }, [address])
+
   const refreshUser = useCallback(async () => {
     if (!address) return null
     const authedApi = getAuthedApi(address)
@@ -223,5 +243,5 @@ export function useAuth() {
     return null
   }, [address])
 
-  return { authStatus, user, authError, signIn, signUp, signOut, checkName, refreshUser }
+  return { authStatus, user, authError, signIn, signUp, signOut, checkName, refreshUser, rename }
 }

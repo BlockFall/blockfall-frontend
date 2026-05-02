@@ -1,21 +1,35 @@
 import { useState, useEffect, useRef } from 'react'
 import { COLORS } from '../game/constants'
 
-export default function SignUpModal({ onSubmit, onClose, checkName }) {
-  const [name, setName] = useState('')
-  const [nameStatus, setNameStatus] = useState(null) // null | 'checking' | 'available' | 'taken' | 'invalid'
+export default function SignUpModal({
+  onSubmit,
+  onClose,
+  checkName,
+  title = 'Choose Your Name',
+  subtitle = 'Pick a unique name for the leaderboard',
+  submitLabel = 'Sign Up',
+  submittingLabel = 'Signing up...',
+  currentName = '',
+}) {
+  const [name, setName] = useState(currentName)
+  const [nameStatus, setNameStatus] = useState(null) // null | 'checking' | 'available' | 'taken' | 'invalid' | 'unchanged'
   const [submitting, setSubmitting] = useState(false)
   const debounceRef = useRef(null)
   const inputRef = useRef(null)
 
   useEffect(() => {
     inputRef.current?.focus()
+    inputRef.current?.select()
   }, [])
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
 
     const trimmed = name.trim()
+    if (currentName && trimmed === currentName.trim()) {
+      setNameStatus('unchanged')
+      return
+    }
     if (trimmed.length < 3) {
       setNameStatus(trimmed.length > 0 ? 'invalid' : null)
       return
@@ -32,7 +46,7 @@ export default function SignUpModal({ onSubmit, onClose, checkName }) {
     }, 400)
 
     return () => clearTimeout(debounceRef.current)
-  }, [name, checkName])
+  }, [name, checkName, currentName])
 
   const canSubmit = nameStatus === 'available' && !submitting
 
@@ -49,6 +63,7 @@ export default function SignUpModal({ onSubmit, onClose, checkName }) {
     nameStatus === 'taken' ? '#ef4444' :
     nameStatus === 'invalid' ? '#ef4444' :
     nameStatus === 'checking' ? COLORS.amber :
+    nameStatus === 'unchanged' ? COLORS.deepSpace :
     'transparent'
 
   const statusText =
@@ -56,6 +71,7 @@ export default function SignUpModal({ onSubmit, onClose, checkName }) {
     nameStatus === 'taken' ? 'Name is already taken' :
     nameStatus === 'invalid' ? 'Name must be 3-20 characters' :
     nameStatus === 'checking' ? 'Checking...' :
+    nameStatus === 'unchanged' ? 'Pick a different name' :
     ''
 
   return (
@@ -90,7 +106,7 @@ export default function SignUpModal({ onSubmit, onClose, checkName }) {
           color: COLORS.deepSpace,
           textAlign: 'center',
         }}>
-          Choose Your Name
+          {title}
         </h2>
         <p style={{
           margin: '0 0 24px',
@@ -99,7 +115,7 @@ export default function SignUpModal({ onSubmit, onClose, checkName }) {
           opacity: 0.5,
           textAlign: 'center',
         }}>
-          Pick a unique name for the leaderboard
+          {subtitle}
         </p>
 
         <form onSubmit={handleSubmit}>
@@ -174,7 +190,7 @@ export default function SignUpModal({ onSubmit, onClose, checkName }) {
                 transition: 'all 0.2s',
               }}
             >
-              {submitting ? 'Signing up...' : 'Sign Up'}
+              {submitting ? submittingLabel : submitLabel}
             </button>
           </div>
         </form>
