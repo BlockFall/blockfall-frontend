@@ -72,8 +72,8 @@ export function usePlayGame() {
       });
 
       // 4. Check if best balance meets price + 1 cent
-      const bestDecimals = decimals[selectedIndex];
-      const extraAmount = BigInt(Math.round(EXTRA_BALANCE_USD * 1000)) * 10n ** (BigInt(bestDecimals) - 3n);
+      const selectedDecimals = BigInt(decimals[selectedIndex]);
+      const extraAmount = BigInt(Math.round(EXTRA_BALANCE_USD * 1000)) * 10n ** (selectedDecimals - 3n);
       if (balances[selectedIndex] < price + extraAmount) {
         setTxStatus(null);
         setBalanceError('Not enough balance');
@@ -89,11 +89,13 @@ export function usePlayGame() {
       });
 
       if (allowance < price) {
+        // 5$ amount for selected token with correct decimals
+        const approvalAmount = 5n * 10n ** selectedDecimals;
         const approveTxHash = await writeContractAsync({
           address: selectedToken,
           abi: erc20Abi,
           functionName: 'approve',
-          args: [BLOCKFALL_GAME_ADDRESS, 2n ** 256n - 1n],
+          args: [BLOCKFALL_GAME_ADDRESS, approvalAmount],
         });
         setTxStatus('confirming');
         const approveReceipt = await publicClient.waitForTransactionReceipt({
