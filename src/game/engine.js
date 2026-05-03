@@ -4,38 +4,27 @@ export function createEmptyBoard() {
   return Array.from({ length: BOARD_HEIGHT }, () => Array(BOARD_WIDTH).fill(null));
 }
 
-// Piece selection state — persists across pieces within a game session
+// 7-bag randomizer: shuffle all keys into a bag, deal one at a time, refill when empty.
 const pieceHistory = {
-  counts: Object.fromEntries(TETROMINO_KEYS.map(k => [k, 0])),
-  recent: [],   // last 2 keys
+  bag: [],
 };
 
 export function resetPieceHistory() {
-  pieceHistory.counts = Object.fromEntries(TETROMINO_KEYS.map(k => [k, 0]));
-  pieceHistory.recent = [];
+  pieceHistory.bag = [];
+}
+
+function refillBag() {
+  const bag = TETROMINO_KEYS.slice();
+  for (let i = bag.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [bag[i], bag[j]] = [bag[j], bag[i]];
+  }
+  pieceHistory.bag = bag;
 }
 
 export function randomTetromino() {
-  const { counts, recent } = pieceHistory;
-  const lastTwo = recent.slice(-2);
-  // Block a key if it appeared as both of the last 2 pieces (would be 3 in a row)
-  const blocked = lastTwo.length === 2 && lastTwo[0] === lastTwo[1] ? lastTwo[0] : null;
-
-  // Weight = 1 / (count + 1), so under-represented pieces are more likely.
-  // Blocked key gets weight 0.
-  const weights = TETROMINO_KEYS.map(k => (k === blocked ? 0 : 1 / (counts[k] + 1)));
-  const total   = weights.reduce((s, w) => s + w, 0);
-
-  let rand = Math.random() * total;
-  let key  = TETROMINO_KEYS[TETROMINO_KEYS.length - 1]; // fallback
-  for (let i = 0; i < TETROMINO_KEYS.length; i++) {
-    rand -= weights[i];
-    if (rand <= 0) { key = TETROMINO_KEYS[i]; break; }
-  }
-
-  counts[key]++;
-  recent.push(key);
-  if (recent.length > 2) recent.shift();
+  if (pieceHistory.bag.length === 0) refillBag();
+  const key = pieceHistory.bag.pop();
 
   return {
     type:  key,
