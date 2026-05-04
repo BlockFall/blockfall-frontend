@@ -34,7 +34,7 @@ export declare const userRoutes: import("hono/hono-base").HonoBase<AuthEnv, {
                     item_id: string;
                     item_type: number;
                     acquisition_type: string;
-                    buy_date: string | null;
+                    acquisition_date: string;
                 }[];
                 pending_claims: {
                     payout_id: string;

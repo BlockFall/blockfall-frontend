@@ -23,7 +23,7 @@ export interface UserItemRow {
     item_id: string;
     item_type: number;
     acquisition_type: string;
-    buy_date: Date | null;
+    acquisition_date: Date;
 }
 export declare function getUserInventory(userId: string): Promise<UserItemRow[]>;
 export type CreateUserResult = {
@@ -36,8 +36,8 @@ export type CreateUserResult = {
 /**
  * Creates a user + initial user_mutable_data + user_numbers (with initial energy)
  * + energy_issuance record in a single transaction. Name uniqueness is checked
- * against the latest user_mutable_data row of every other user, serialized via
- * a transaction-scoped advisory lock keyed on the name. The unique constraint
+ * via `users_with_data` (latest mutable row per user), serialized via a
+ * transaction-scoped advisory lock keyed on the name. The unique constraint
  * on users.address still throws postgres error '23505' on duplicate address.
  */
 export declare function createUser(address: string, name: string, userSource: UserSource, walletInfo: string): Promise<CreateUserResult>;
@@ -49,9 +49,9 @@ export type RenameResult = {
 };
 /**
  * Inserts a new user_mutable_data row with the given name, preserving the
- * latest is_banned flag. Uniqueness is checked against the latest name of
- * every other user inside the same transaction; a transaction-scoped advisory
- * lock keyed on the name serializes concurrent renames to the same target.
+ * latest is_banned flag. Uniqueness is checked via `users_with_data` inside
+ * the same transaction; a transaction-scoped advisory lock keyed on the name
+ * serializes concurrent renames to the same target.
  */
 export declare function renameUser(address: string, newName: string): Promise<RenameResult>;
 //# sourceMappingURL=users.d.ts.map
