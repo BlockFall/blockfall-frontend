@@ -20,6 +20,7 @@ export default function App() {
   const [screen, setScreen] = useState('home');
   const [gamePlayId, setGamePlayId] = useState(null);
   const [showRejectedToast, setShowRejectedToast] = useState(false);
+  const [showNoEnergyModal, setShowNoEnergyModal] = useState(false);
   const audio = useAudio();
 
   const { isConnected, address } = useAccount();
@@ -86,13 +87,19 @@ export default function App() {
   }, [energy, audio, startPlay, callGameStart, refreshUser]);
 
   const handlePlayAgain = useCallback(async () => {
+    const updatedUser = await refreshUser();
+    const currentEnergy = updatedUser?.stats?.energy ?? 0;
+    if (currentEnergy <= 0) {
+      setShowNoEnergyModal(true);
+      return null;
+    }
     const playId = await callGameStart();
     if (playId) {
       setGamePlayId(playId);
       return playId;
     }
     return null;
-  }, [callGameStart]);
+  }, [callGameStart, refreshUser]);
 
   const handleExitGame = useCallback(() => {
     setScreen('home');
@@ -212,6 +219,106 @@ export default function App() {
           onDone={() => setShowRejectedToast(false)}
         />
       )}
+
+      {showNoEnergyModal && (
+        <NoEnergyModal
+          onConfirm={() => {
+            setShowNoEnergyModal(false);
+            setScreen('home');
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function NoEnergyModal({ onConfirm }) {
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 950,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'rgba(2,48,71,0.55)',
+        backdropFilter: 'blur(4px)',
+        animation: 'noEnergyFade 0.2s ease',
+      }}
+    >
+      <div
+        style={{
+          background: 'white',
+          borderRadius: 24,
+          padding: '40px 36px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 18,
+          minWidth: 280,
+          maxWidth: 340,
+          boxShadow: '0 24px 64px rgba(2,48,71,0.2)',
+          animation: 'noEnergyPop 0.25s ease',
+        }}
+      >
+        <div
+          style={{
+            width: 56,
+            height: 56,
+            borderRadius: '50%',
+            background: '#fef3c7',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="#f59e0b">
+            <path d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z" />
+          </svg>
+        </div>
+
+        <p
+          style={{
+            margin: 0,
+            fontSize: 17,
+            fontWeight: 700,
+            color: '#0f172a',
+            textAlign: 'center',
+            lineHeight: 1.4,
+          }}
+        >
+          You have no energy left
+        </p>
+
+        <button
+          onClick={onConfirm}
+          style={{
+            background: 'linear-gradient(135deg, #f97316, #fbbf24)',
+            color: 'white',
+            border: 'none',
+            borderRadius: 12,
+            padding: '12px 32px',
+            fontSize: 15,
+            fontWeight: 700,
+            cursor: 'pointer',
+            marginTop: 4,
+          }}
+        >
+          OK
+        </button>
+      </div>
+
+      <style>{`
+        @keyframes noEnergyFade {
+          from { opacity: 0; }
+          to   { opacity: 1; }
+        }
+        @keyframes noEnergyPop {
+          from { opacity: 0; transform: scale(0.92); }
+          to   { opacity: 1; transform: scale(1); }
+        }
+      `}</style>
     </div>
   );
 }
