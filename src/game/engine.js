@@ -1,4 +1,11 @@
-import { BOARD_WIDTH, BOARD_HEIGHT, TETROMINOES, TETROMINO_KEYS } from './constants';
+import {
+  BOARD_WIDTH,
+  BOARD_HEIGHT,
+  TETROMINOES,
+  TETROMINO_KEYS,
+  SRS_KICKS_JLSTZ,
+  SRS_KICKS_I,
+} from './constants';
 
 export function createEmptyBoard() {
   return Array.from({ length: BOARD_HEIGHT }, () => Array(BOARD_WIDTH).fill(null));
@@ -25,30 +32,32 @@ function refillBag() {
 export function randomTetromino() {
   if (pieceHistory.bag.length === 0) refillBag();
   const key = pieceHistory.bag.pop();
+  const spawnShape = TETROMINOES[key].shapes[0];
 
   return {
-    type:  key,
-    shape: TETROMINOES[key].shape.map(row => [...row]),
-    color: TETROMINOES[key].color,
-    x:     Math.floor(BOARD_WIDTH / 2) - Math.floor(TETROMINOES[key].shape[0].length / 2),
-    y:     0,
+    type:     key,
+    rotation: 0,
+    shape:    spawnShape.map(row => [...row]),
+    color:    TETROMINOES[key].color,
+    x:        Math.floor(BOARD_WIDTH / 2) - Math.floor(spawnShape[0].length / 2),
+    y:        0,
   };
 }
 
-export function rotate(shape, dir = 1) {
-  const rows = shape.length;
-  const cols = shape[0].length;
-  const rotated = Array.from({ length: cols }, () => Array(rows).fill(0));
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      if (dir === 1) {
-        rotated[c][rows - 1 - r] = shape[r][c];
-      } else {
-        rotated[cols - 1 - c][r] = shape[r][c];
-      }
-    }
+// SRS rotation with wall kicks. Returns a new piece on success, or null if every
+// kick test collides. Direction: 1 = clockwise, -1 = counter-clockwise.
+export function tryRotate(board, piece, dir = 1) {
+  if (piece.type === 'O') return piece;
+  const from = piece.rotation ?? 0;
+  const to   = (from + (dir === 1 ? 1 : 3)) % 4;
+  const shape = TETROMINOES[piece.type].shapes[to];
+  const table = piece.type === 'I' ? SRS_KICKS_I : SRS_KICKS_JLSTZ;
+  const kicks = table[`${from}>${to}`];
+  for (const [dx, dy] of kicks) {
+    const test = { ...piece, shape, rotation: to, x: piece.x + dx, y: piece.y + dy };
+    if (isValidPosition(board, test)) return test;
   }
-  return rotated;
+  return null;
 }
 
 export function isValidPosition(board, piece, offsetX = 0, offsetY = 0) {

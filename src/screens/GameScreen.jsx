@@ -3,7 +3,7 @@ import {
   BOARD_WIDTH, BOARD_HEIGHT, COLORS, LEVELS, BASE_SCORE, HARD_DROP_SCORE,
 } from '../game/constants';
 import {
-  createEmptyBoard, randomTetromino, resetPieceHistory, rotate, isValidPosition,
+  createEmptyBoard, randomTetromino, resetPieceHistory, tryRotate, isValidPosition,
   placePiece, clearLines, getDropPosition, isGameOver,
 } from '../game/engine';
 import { useParticles, ParticleCanvas, RowFlash } from '../effects/ParticleSystem';
@@ -238,17 +238,11 @@ export default function GameScreen({ onExit, onPlayAgain, audio, gamePlayId, add
   function rotatePiece(dir) {
     const state = gs.current;
     if (!state || !state.piece || state.paused || state.gameOver) return;
-    const rotated = rotate(state.piece.shape, dir);
-    for (const kick of [0, 1, -1, 2, -2]) {
-      const test = { ...state.piece, shape: rotated, x: state.piece.x + kick };
-      if (isValidPosition(state.board, test)) {
-        state.piece.shape = rotated;
-        state.piece.x    += kick;
-        audio.playRotate();
-        drawBoard();
-        return;
-      }
-    }
+    const next = tryRotate(state.board, state.piece, dir);
+    if (!next) return;
+    state.piece = next;
+    audio.playRotate();
+    drawBoard();
   }
 
   function hardDrop() {
@@ -348,15 +342,11 @@ export default function GameScreen({ onExit, onPlayAgain, audio, gamePlayId, add
     if (cellOffset === 0) return;
 
     const targetX = td.pieceStartX + cellOffset;
-    const clamped = Math.max(
-      0,
-      Math.min(BOARD_WIDTH - state.piece.shape[0].length, targetX),
-    );
-    if (clamped !== state.piece.x) {
-      // Walk toward target respecting collisions
-      const dir      = clamped > state.piece.x ? 1 : -1;
-      let   steps    = Math.abs(clamped - state.piece.x);
-      let   didMove  = false;
+    if (targetX !== state.piece.x) {
+      // Walk toward target respecting collisions; isValidPosition handles wall stops.
+      const dir     = targetX > state.piece.x ? 1 : -1;
+      let   steps   = Math.abs(targetX - state.piece.x);
+      let   didMove = false;
       while (steps-- > 0 && isValidPosition(state.board, state.piece, dir, 0)) {
         state.piece.x += dir;
         didMove = true;
@@ -416,13 +406,9 @@ export default function GameScreen({ onExit, onPlayAgain, audio, gamePlayId, add
     if (cellOffset === 0) return;
 
     const targetX = td.pieceStartX + cellOffset;
-    const clamped = Math.max(
-      0,
-      Math.min(BOARD_WIDTH - state.piece.shape[0].length, targetX),
-    );
-    if (clamped !== state.piece.x) {
-      const dir     = clamped > state.piece.x ? 1 : -1;
-      let   steps   = Math.abs(clamped - state.piece.x);
+    if (targetX !== state.piece.x) {
+      const dir     = targetX > state.piece.x ? 1 : -1;
+      let   steps   = Math.abs(targetX - state.piece.x);
       let   didMove = false;
       while (steps-- > 0 && isValidPosition(state.board, state.piece, dir, 0)) {
         state.piece.x += dir;
