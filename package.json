@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "VITE_API_URL=https://api.blockfall.xyz vite build",
+    "build": "VITE_API_URL=https://api.blockfall.xyz VITE_GAME_EVENTS_ENABLED=true vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "types:sync": "rsync -a --delete ../blockfall-backend/dist/types/ ./src/types/blockfall-backend/"

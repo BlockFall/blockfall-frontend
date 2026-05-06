@@ -7,7 +7,7 @@ import {
   placePiece, clearLines, getDropPosition, isGameOver,
 } from '../game/engine';
 import { useParticles, ParticleCanvas, RowFlash } from '../effects/ParticleSystem';
-import { getAuthedApi } from '../api';
+import { getAuthedApi, sendGameEvent } from '../api';
 
 function roundRect(ctx, x, y, w, h, r) {
   ctx.beginPath();
@@ -171,6 +171,7 @@ export default function GameScreen({ onExit, onPlayAgain, audio, gamePlayId, add
       clearTimeout(flashTimer.current);
       flashTimer.current = setTimeout(() => setFlashingRows([]), 350);
       audio.playClear(clearedRows.length);
+      sendGameEvent(address, gamePlayId, 'line_clear', { intval: clearedRows.length });
     }
 
     const linesCleared      = clearedRows.length;
@@ -286,6 +287,7 @@ export default function GameScreen({ onExit, onPlayAgain, audio, gamePlayId, add
     setUiState(u => ({ ...u, paused: state.paused }));
     if (!state.paused) scheduleTick();
     else clearTimeout(tickTimer.current);
+    sendGameEvent(address, gamePlayId, state.paused ? 'pause' : 'resume');
   }
 
   useEffect(() => {
