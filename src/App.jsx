@@ -32,12 +32,34 @@ export default function App() {
 
   const energy = user?.stats?.energy ?? 0;
 
+  // Backend stats can lag a few seconds after game start/end; schedule a
+  // delayed refresh so the home screen reflects updated numbers.
+  const refreshTimerRef = useRef(null);
+  const scheduleRefreshUser = useCallback(() => {
+    if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
+    refreshTimerRef.current = setTimeout(() => {
+      refreshTimerRef.current = null;
+      refreshUser();
+    }, 3000);
+  }, [refreshUser]);
+
+  useEffect(() => () => {
+    if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
+  }, []);
+
   // Auto-connect if window.ethereum is present (MiniPay or any injected wallet)
   useEffect(() => {
     if (typeof window !== 'undefined' && window.ethereum) {
       reconnect();
     }
   }, [reconnect]);
+
+  // Refresh user data whenever the home screen is shown for a signed-in user.
+  useEffect(() => {
+    if (screen === 'home' && authStatus === 'signed_in') {
+      refreshUser();
+    }
+  }, [screen, authStatus, refreshUser]);
 
   // When wallet address changes, redirect to home
   useEffect(() => {
@@ -65,8 +87,13 @@ export default function App() {
     const res = await authedApi.game.start.$post();
     if (!res.ok) return null;
     const data = await res.json();
+    scheduleRefreshUser();
     return data.game_play_id;
-  }, [address]);
+  }, [address, scheduleRefreshUser]);
+
+  const handleGameEnded = useCallback(() => {
+    scheduleRefreshUser();
+  }, [scheduleRefreshUser]);
 
   const handlePlay = useCallback(async () => {
     audio.initAudio();
@@ -182,7 +209,7 @@ export default function App() {
           />
         )}
         {screen === 'game' && (
-          <GameScreen onExit={handleExitGame} onPlayAgain={handlePlayAgain} audio={audio} gamePlayId={gamePlayId} address={address} />
+          <GameScreen onExit={handleExitGame} onPlayAgain={handlePlayAgain} onGameEnded={handleGameEnded} audio={audio} gamePlayId={gamePlayId} address={address} />
         )}
         {screen === 'leaderboard' && (
           <LeaderboardScreen onGoHome={handleGoHome} address={address} user={user} />

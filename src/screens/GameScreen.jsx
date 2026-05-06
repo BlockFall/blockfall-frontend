@@ -36,7 +36,7 @@ function drawCell(ctx, x, y, cell, color, alpha = 1) {
   ctx.restore();
 }
 
-export default function GameScreen({ onExit, onPlayAgain, audio, gamePlayId, address }) {
+export default function GameScreen({ onExit, onPlayAgain, onGameEnded, audio, gamePlayId, address }) {
   const canvasRef = useRef(null);
   const areaRef   = useRef(null);   // canvas container — measured for sizing
   const cellRef   = useRef(28);     // current cell size, used by all game functions
@@ -201,6 +201,7 @@ export default function GameScreen({ onExit, onPlayAgain, audio, gamePlayId, add
       if (gamePlayId && address) {
         submitWithRetry(address, 'game_end', { game_play_id: gamePlayId, score: finalScore });
       }
+      onGameEnded?.();
       return;
     }
 
