@@ -7,7 +7,8 @@ import {
   placePiece, clearLines, getDropPosition, isGameOver,
 } from '../game/engine';
 import { useParticles, ParticleCanvas, RowFlash } from '../effects/ParticleSystem';
-import { getAuthedApi, sendGameEvent } from '../api';
+import { sendGameEvent } from '../api';
+import { submitWithRetry } from '../pendingRequests';
 
 function roundRect(ctx, x, y, w, h, r) {
   ctx.beginPath();
@@ -196,12 +197,9 @@ export default function GameScreen({ onExit, onPlayAgain, audio, gamePlayId, add
       audio.stopMusic();
       audio.playGameOver();
 
-      // Report game end to backend
+      // Report game end to backend; persisted across refresh, retried up to 3 times.
       if (gamePlayId && address) {
-        const authedApi = getAuthedApi(address);
-        if (authedApi) {
-          authedApi.game.end.$post({ json: { game_play_id: gamePlayId, score: finalScore } }).catch(() => {});
-        }
+        submitWithRetry(address, 'game_end', { game_play_id: gamePlayId, score: finalScore });
       }
       return;
     }

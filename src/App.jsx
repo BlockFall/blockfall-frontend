@@ -14,6 +14,7 @@ import { useAudio } from './audio/useAudio';
 import { usePlayGame } from './hooks/usePlayGame';
 import { useAuth } from './hooks/useAuth';
 import { getAuthedApi } from './api';
+import { processPendingRequests } from './pendingRequests';
 import { TxOverlay, Toast } from './components/TxOverlay';
 
 export default function App() {
@@ -45,6 +46,14 @@ export default function App() {
     }
     prevAddressRef.current = address;
   }, [address]);
+
+  // Replay any queued game_end / purchase_submit requests left over from a
+  // previous session (e.g. user refreshed mid-flight).
+  useEffect(() => {
+    if (authStatus === 'signed_in' && address) {
+      processPendingRequests(address);
+    }
+  }, [authStatus, address]);
 
   const handleConnectWallet = useCallback(() => {
     modal.open();

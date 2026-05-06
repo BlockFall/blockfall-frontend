@@ -10,7 +10,7 @@ import {
   USDm_ADDRESS,
   PAYMENT_TOKENS,
 } from '../constants.js';
-import { getAuthedApi } from '../api.js';
+import { submitWithRetry } from '../pendingRequests.js';
 
 // txStatus: null | 'awaiting_wallet' | 'confirming' | 'rejected' | 'error' | 'success'
 
@@ -124,19 +124,9 @@ export function usePlayGame() {
         throw new Error('Buy transaction reverted');
       }
 
-      // 7. Submit tx_hash to backend for verification (retry up to 3 times)
-      const authedApi = getAuthedApi(address);
-      if (authedApi) {
-        for (let attempt = 0; attempt < 3; attempt++) {
-          try {
-            await authedApi.purchase.submit.$post({ json: { tx_hash: buyTxHash } });
-            break;
-          } catch (submitErr) {
-            if (attempt === 2) throw submitErr;
-            await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
-          }
-        }
-      }
+      // 7. Submit tx_hash to backend; persisted across refresh, retried up to 3 times.
+      const submitOk = await submitWithRetry(address, 'purchase_submit', { tx_hash: buyTxHash });
+      if (!submitOk) throw new Error('Purchase submission failed');
 
       setTxStatus('success');
       return true;
