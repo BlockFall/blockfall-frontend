@@ -256,7 +256,7 @@ function PodiumCard({ entry, pos, height, showReward, isMe }) {
               marginTop: 2,
             }}
           >
-            {entry.reward}
+            {entry.reward}$
           </div>
         )}
       </div>
@@ -326,7 +326,7 @@ function LeaderRow({ entry, showReward, isMe }) {
               padding: '1px 7px',
             }}
           >
-            {entry.reward}
+            {entry.reward}$
           </div>
         )}
       </div>
