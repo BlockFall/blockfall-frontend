@@ -17,21 +17,28 @@ export interface GamePlayResultRow {
  *
  * Returns the new game play row, or null if energy is 0.
  */
-export declare function startGamePlay(userId: string, dayId: string): Promise<GamePlayRow | null>;
+export declare function startGamePlay(userId: string, dayId: string, ipAddress: string | null): Promise<GamePlayRow | null>;
+export type EndGamePlayError = 'invalid_session' | 'session_expired' | 'time_too_short' | 'too_few_line_clears';
+export type EndGamePlayOutcome = {
+    ok: true;
+    result: GamePlayResultRow;
+} | {
+    ok: false;
+    error: EndGamePlayError;
+};
 /**
  * Ends a game play session. Validates:
- * 1. The game play exists and belongs to the given user
- * 2. It hasn't already ended (no row in game_play_results)
- * 3. Active play time is within 30 minutes (wall-clock since start, minus
+ * 1. Active play time is within 30 minutes (wall-clock since start, minus
  *    pause→resume intervals from game_ingame_events)
+ * 2. Score is plausible for the observed active play time
+ * 3. Score is plausible for the observed line_clear event count
+ * 4. The game play exists, belongs to the given user, and hasn't ended yet
  *
- * Inserts a game_play_results row, and updates user_numbers
+ * On success inserts a game_play_results row and updates user_numbers
  * (last_score, best_score, total_score).
- *
- * Returns the inserted result row, or null if validation fails.
  */
-export declare function endGamePlay(gamePlayId: string, userId: string, score: number): Promise<GamePlayResultRow | null>;
-export declare function bufferIngameEvent(gamePlayId: string, userId: string, eventType: string, intval: number | null, textval: string | null, extraData: unknown): {
+export declare function endGamePlay(gamePlayId: string, userId: string, score: number): Promise<EndGamePlayOutcome>;
+export declare function bufferIngameEvent(gamePlayId: string, eventType: string, intval: number | null, textval: string | null, extraData: unknown): {
     event_time: Date;
 };
 /**

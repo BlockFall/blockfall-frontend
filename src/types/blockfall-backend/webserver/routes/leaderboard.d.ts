@@ -4,13 +4,6 @@ export declare const leaderboardRoutes: import("hono/hono-base").HonoBase<AuthEn
         $get: {
             input: {};
             output: {
-                error: string;
-            };
-            outputFormat: "json";
-            status: 404;
-        } | {
-            input: {};
-            output: {
                 yesterday: {
                     top: {
                         reward: string | null;

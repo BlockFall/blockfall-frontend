@@ -6241,7 +6241,6 @@ declare const app: import("hono/hono-base").HonoBase<{}, ({
             };
             output: {
                 registered: true;
-                name: string;
             };
             outputFormat: "json";
             status: import("hono/utils/http-status").ContentfulStatusCode;
@@ -6250,13 +6249,6 @@ declare const app: import("hono/hono-base").HonoBase<{}, ({
 }, "/checkuser"> | import("hono/types").MergeSchemaPath<{
     "/start": {
         $post: {
-            input: {};
-            output: {
-                error: string;
-            };
-            outputFormat: "json";
-            status: 404;
-        } | {
             input: {};
             output: {
                 error: string;
@@ -7486,7 +7478,7 @@ declare const app: import("hono/hono-base").HonoBase<{}, ({
                 error: string;
             };
             outputFormat: "json";
-            status: 404;
+            status: 400;
         } | {
             input: {
                 json: {
@@ -7498,7 +7490,7 @@ declare const app: import("hono/hono-base").HonoBase<{}, ({
                 error: string;
             };
             outputFormat: "json";
-            status: 400;
+            status: 422;
         } | {
             input: {
                 json: {
@@ -8732,21 +8724,6 @@ declare const app: import("hono/hono-base").HonoBase<{}, ({
                 };
             };
             output: {
-                error: string;
-            };
-            outputFormat: "json";
-            status: 404;
-        } | {
-            input: {
-                json: {
-                    game_play_id: string;
-                    event_type: string;
-                    intval?: number | null | undefined;
-                    textval?: string | null | undefined;
-                    extra_data?: unknown;
-                };
-            };
-            output: {
                 event_time: string;
             };
             outputFormat: "json";
@@ -9964,7 +9941,7 @@ declare const app: import("hono/hono-base").HonoBase<{}, ({
                 error: string;
             };
             outputFormat: "json";
-            status: 404;
+            status: 409;
         } | {
             input: {
                 json: {
@@ -9975,7 +9952,7 @@ declare const app: import("hono/hono-base").HonoBase<{}, ({
                 error: string;
             };
             outputFormat: "json";
-            status: 409;
+            status: 404;
         } | {
             input: {
                 json: {
@@ -11223,7 +11200,7 @@ declare const app: import("hono/hono-base").HonoBase<{}, ({
                 error: string;
             };
             outputFormat: "json";
-            status: 404;
+            status: 409;
         } | {
             input: {
                 json: {
@@ -11234,7 +11211,7 @@ declare const app: import("hono/hono-base").HonoBase<{}, ({
                 error: string;
             };
             outputFormat: "json";
-            status: 409;
+            status: 404;
         } | {
             input: {
                 json: {
@@ -11278,13 +11255,6 @@ declare const app: import("hono/hono-base").HonoBase<{}, ({
         $get: {
             input: {};
             output: {
-                error: string;
-            };
-            outputFormat: "json";
-            status: 404;
-        } | {
-            input: {};
-            output: {
                 days: {
                     date: string;
                     checked_in: boolean;
@@ -11297,13 +11267,6 @@ declare const app: import("hono/hono-base").HonoBase<{}, ({
 } & {
     "/": {
         $post: {
-            input: {};
-            output: {
-                error: string;
-            };
-            outputFormat: "json";
-            status: 404;
-        } | {
             input: {};
             output: {
                 error: string;
@@ -11325,13 +11288,6 @@ declare const app: import("hono/hono-base").HonoBase<{}, ({
 }, "/checkin"> | import("hono/types").MergeSchemaPath<{
     "/": {
         $get: {
-            input: {};
-            output: {
-                error: string;
-            };
-            outputFormat: "json";
-            status: 404;
-        } | {
             input: {};
             output: {
                 yesterday: {

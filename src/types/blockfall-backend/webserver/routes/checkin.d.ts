@@ -4,13 +4,6 @@ export declare const checkinRoutes: import("hono/hono-base").HonoBase<AuthEnv, {
         $get: {
             input: {};
             output: {
-                error: string;
-            };
-            outputFormat: "json";
-            status: 404;
-        } | {
-            input: {};
-            output: {
                 days: {
                     date: string;
                     checked_in: boolean;
@@ -23,13 +16,6 @@ export declare const checkinRoutes: import("hono/hono-base").HonoBase<AuthEnv, {
 } & {
     "/": {
         $post: {
-            input: {};
-            output: {
-                error: string;
-            };
-            outputFormat: "json";
-            status: 404;
-        } | {
             input: {};
             output: {
                 error: string;

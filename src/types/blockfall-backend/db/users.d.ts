@@ -17,8 +17,12 @@ export type UserWithNumbersRow = UserRow & {
     energy: number;
 };
 export declare function findUserByAddress(address: string): Promise<UserRow | null>;
+export declare const findUserByAddressCached: (params: string) => Promise<UserRow | null | undefined>;
+export declare function findUserIdByAddress(address: string): Promise<string | null>;
+export declare const findUserIdByAddressCached: (params: string) => Promise<string | null | undefined>;
+export declare const getCachedBannedUserIds: () => Promise<Set<string> | null | undefined>;
 export declare function findUserByName(name: string): Promise<UserRow | null>;
-export declare function getUserWithNumbers(address: string): Promise<UserWithNumbersRow | null>;
+export declare function getUserWithNumbers(userId: string): Promise<UserWithNumbersRow | null>;
 export interface UserItemRow {
     item_id: string;
     item_type: number;

@@ -29,4 +29,5 @@ export declare function getBlock(blockNumber: bigint): Promise<{
     withdrawalsRoot?: `0x${string}` | undefined | undefined;
     transactions: `0x${string}`[];
 }>;
+export declare function getBlockfallSeed(): Promise<`0x${string}`>;
 //# sourceMappingURL=celo-rpc-reader.d.ts.map

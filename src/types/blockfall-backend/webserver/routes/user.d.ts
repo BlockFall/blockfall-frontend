@@ -2510,7 +2510,6 @@ export declare const checkUserRoute: import("hono/hono-base").HonoBase<import("h
             };
             output: {
                 registered: true;
-                name: string;
             };
             outputFormat: "json";
             status: import("hono/utils/http-status").ContentfulStatusCode;

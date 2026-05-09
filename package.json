@@ -8,7 +8,7 @@
     "build": "VITE_API_URL=https://api.blockfall.xyz VITE_GAME_EVENTS_ENABLED=true vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "types:sync": "rsync -a --delete ../blockfall-backend/dist/types/ ./src/types/blockfall-backend/"
+    "types:sync": "rsync -a --delete --exclude='*.map' ../blockfall-backend/dist/types/ ./src/types/blockfall-backend/"
   },
   "dependencies": {
     "@reown/appkit": "^1.8.19",

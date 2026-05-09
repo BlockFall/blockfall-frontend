@@ -8,13 +8,6 @@ export declare const gameRoutes: import("hono/hono-base").HonoBase<AuthEnv, {
                 error: string;
             };
             outputFormat: "json";
-            status: 404;
-        } | {
-            input: {};
-            output: {
-                error: string;
-            };
-            outputFormat: "json";
             status: 400;
         } | {
             input: {};
@@ -1239,7 +1232,7 @@ export declare const gameRoutes: import("hono/hono-base").HonoBase<AuthEnv, {
                 error: string;
             };
             outputFormat: "json";
-            status: 404;
+            status: 400;
         } | {
             input: {
                 json: {
@@ -1251,7 +1244,7 @@ export declare const gameRoutes: import("hono/hono-base").HonoBase<AuthEnv, {
                 error: string;
             };
             outputFormat: "json";
-            status: 400;
+            status: 422;
         } | {
             input: {
                 json: {
@@ -2474,21 +2467,6 @@ export declare const gameRoutes: import("hono/hono-base").HonoBase<AuthEnv, {
             };
             outputFormat: "json";
             status: 400;
-        } | {
-            input: {
-                json: {
-                    game_play_id: string;
-                    event_type: string;
-                    intval?: number | null | undefined;
-                    textval?: string | null | undefined;
-                    extra_data?: unknown;
-                };
-            };
-            output: {
-                error: string;
-            };
-            outputFormat: "json";
-            status: 404;
         } | {
             input: {
                 json: {

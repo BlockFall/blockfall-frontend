@@ -1,4 +1,5 @@
 export interface JwtPayload {
+    user_id: string;
     address: string;
     chainId: number;
 }

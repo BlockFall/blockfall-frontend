@@ -27,4 +27,6 @@ export declare const PAYMENT_TOKENS: {
         decimals: number;
     };
 };
+export declare const DAILY_PAYOUT_TOKEN_ID: 1;
+export declare const MIN_PAYOUT_THRESHOLD_USDT = "2";
 //# sourceMappingURL=constants.d.ts.map

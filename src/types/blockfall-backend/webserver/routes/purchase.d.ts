@@ -1211,7 +1211,7 @@ export declare const purchaseRoutes: import("hono/hono-base").HonoBase<AuthEnv, 
                 error: string;
             };
             outputFormat: "json";
-            status: 404;
+            status: 409;
         } | {
             input: {
                 json: {
@@ -1222,7 +1222,7 @@ export declare const purchaseRoutes: import("hono/hono-base").HonoBase<AuthEnv, 
                 error: string;
             };
             outputFormat: "json";
-            status: 409;
+            status: 404;
         } | {
             input: {
                 json: {
