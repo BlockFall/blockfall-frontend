@@ -26,12 +26,14 @@ export function useAuth() {
   const [authStatus, setAuthStatus] = useState('loading')
   const [user, setUser] = useState(null)
   const [authError, setAuthError] = useState(null)
+  const [banned, setBanned] = useState(false)
 
   // Check auth state whenever wallet connection or address changes
   useEffect(() => {
     if (!isConnected || !address) {
       setAuthStatus('no_wallet')
       setUser(null)
+      setBanned(false)
       return
     }
 
@@ -53,6 +55,10 @@ export function useAuth() {
               setUser(data)
               setAuthStatus('signed_in')
             }
+            return
+          }
+          if (res.status === 403) {
+            if (!cancelled) setBanned(true)
             return
           }
         } catch {
@@ -112,6 +118,10 @@ export function useAuth() {
 
       // 4. Verify
       const verifyRes = await api.auth.verify.$post({ json: { message, signature } })
+      if (verifyRes.status === 403) {
+        setBanned(true)
+        return
+      }
       if (!verifyRes.ok) {
         const err = await verifyRes.json()
         throw new Error(err.error || 'Verification failed')
@@ -195,6 +205,7 @@ export function useAuth() {
   const signOut = useCallback(() => {
     if (address) localStorage.removeItem(tokenKey(address))
     setUser(null)
+    setBanned(false)
     setAuthStatus(isConnected ? 'registered' : 'no_wallet')
   }, [isConnected, address])
 
@@ -239,9 +250,12 @@ export function useAuth() {
         setUser(data)
         return data
       }
+      if (res.status === 403) {
+        setBanned(true)
+      }
     } catch {}
     return null
   }, [address])
 
-  return { authStatus, user, authError, signIn, signUp, signOut, checkName, refreshUser, rename }
+  return { authStatus, user, authError, banned, signIn, signUp, signOut, checkName, refreshUser, rename }
 }

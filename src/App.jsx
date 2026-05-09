@@ -16,6 +16,7 @@ import { useAuth } from './hooks/useAuth';
 import { getAuthedApi } from './api';
 import { processPendingRequests } from './pendingRequests';
 import { TxOverlay, Toast } from './components/TxOverlay';
+import { BannedOverlay } from './components/BannedOverlay';
 
 export default function App() {
   const [screen, setScreen] = useState('home');
@@ -28,7 +29,7 @@ export default function App() {
   const prevAddressRef = useRef(address);
   const { reconnect } = useReconnect();
   const { startPlay, buyItem, txStatus, resetTxStatus, balanceError, resetBalanceError } = usePlayGame();
-  const { authStatus, user, authError, signIn, signUp, signOut, checkName, refreshUser, rename } = useAuth();
+  const { authStatus, user, authError, banned, signIn, signUp, signOut, checkName, refreshUser, rename } = useAuth();
 
   const energy = user?.stats?.energy ?? 0;
 
@@ -248,6 +249,8 @@ export default function App() {
       </div>
 
       <TxOverlay txStatus={txStatus} onClose={handleCloseTxOverlay} />
+
+      {banned && <BannedOverlay onSignOut={signOut} />}
 
       {showRejectedToast && (
         <Toast
