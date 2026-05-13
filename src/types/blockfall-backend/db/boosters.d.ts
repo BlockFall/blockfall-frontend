@@ -14,6 +14,11 @@ export type ActivateBoosterOutcome = {
     error: ActivateBoosterError;
 };
 /**
+ * Returns the user's currently-active booster (latest activation whose window
+ * is still open), or null if none. Uses idx_user_booster_activations_latest.
+ */
+export declare function getActiveBooster(userId: string): Promise<BoosterActivationRow | null>;
+/**
  * Activates a booster item owned by `userId`. Transactionally:
  *   1. Verifies the item exists, belongs to the user, is a known booster type,
  *      and hasn't been used.

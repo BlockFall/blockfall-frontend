@@ -44,6 +44,13 @@ export declare const userRoutes: import("hono/hono-base").HonoBase<AuthEnv, {
                     payment_token: number;
                     signature: string;
                 }[];
+                active_booster: {
+                    user_booster_activation_id: string;
+                    item_id: string;
+                    multiplier: number;
+                    started_at: string;
+                    expires_at: string;
+                } | null;
             };
             outputFormat: "json";
             status: import("hono/utils/http-status").ContentfulStatusCode;
