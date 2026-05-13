@@ -4,6 +4,7 @@ import Logo from '../components/Logo';
 import AnimatedBlocks from '../components/AnimatedBlocks';
 import SignUpModal from '../components/SignUpModal';
 import { COLORS } from '../game/constants';
+import { multiplierLabel, msRemaining, formatCountdown } from '../boosters';
 
 const FLOAT_BUTTONS_ALWAYS = [
   {
@@ -275,6 +276,9 @@ export default function HomeScreen({
             </span>
           </button>
         ))}
+        {isSignedIn && user?.active_booster && (
+          <BoosterIndicator booster={user.active_booster} />
+        )}
       </div>
 
       {/* Center content */}
@@ -596,6 +600,135 @@ function StatCard({ label, value, color }) {
     <div style={{ background: 'white', borderRadius: 16, padding: '12px 20px', textAlign: 'center', boxShadow: '0 4px 16px rgba(2,48,71,0.08)', minWidth: 110, border: `2px solid ${color}22` }}>
       <div style={{ fontSize: 20, fontWeight: 800, color: COLORS.deepSpace }}>{value}</div>
       <div style={{ fontSize: 11, color, fontWeight: 600, letterSpacing: 1 }}>{label}</div>
+    </div>
+  );
+}
+
+function BoosterIndicator({ booster }) {
+  const [remaining, setRemaining] = useState(() => msRemaining(booster.expires_at));
+  const [showDetails, setShowDetails] = useState(false);
+
+  useEffect(() => {
+    const id = setInterval(() => setRemaining(msRemaining(booster.expires_at)), 1000);
+    return () => clearInterval(id);
+  }, [booster.expires_at]);
+
+  if (remaining <= 0) return null;
+
+  const mult = multiplierLabel(booster.multiplier);
+
+  return (
+    <>
+      <button
+        onClick={() => setShowDetails(true)}
+        title="Active booster"
+        style={{
+          background: `linear-gradient(135deg, ${COLORS.blueGreen}, ${COLORS.deepSpace})`,
+          border: 'none',
+          borderRadius: 14,
+          padding: '8px 10px',
+          cursor: 'pointer',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 3,
+          boxShadow: `0 4px 14px ${COLORS.blueGreen}66`,
+          minWidth: 52,
+          color: 'white',
+          transition: 'transform 0.12s',
+        }}
+        onMouseDown={e => (e.currentTarget.style.transform = 'scale(0.93)')}
+        onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
+        onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
+      >
+        <span style={{ fontSize: 14, fontWeight: 900, letterSpacing: 0.3 }}>{mult}</span>
+        <span style={{ fontSize: 9, fontWeight: 700, opacity: 0.95, fontVariantNumeric: 'tabular-nums' }}>
+          {formatCountdown(remaining)}
+        </span>
+      </button>
+      {showDetails && (
+        <BoosterDetailsModal
+          booster={booster}
+          remaining={remaining}
+          onClose={() => setShowDetails(false)}
+        />
+      )}
+    </>
+  );
+}
+
+function BoosterDetailsModal({ booster, remaining, onClose }) {
+  const mult = multiplierLabel(booster.multiplier);
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 970,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'rgba(2,48,71,0.65)',
+        backdropFilter: 'blur(6px)',
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          background: 'white',
+          borderRadius: 24,
+          padding: '32px 28px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 14,
+          minWidth: 280,
+          maxWidth: 340,
+          boxShadow: '0 24px 64px rgba(2,48,71,0.3)',
+          textAlign: 'center',
+        }}
+      >
+        <div style={{ fontSize: 56 }}>🚀</div>
+        <div style={{ fontSize: 16, fontWeight: 700, color: COLORS.deepSpace, opacity: 0.7 }}>
+          You have active
+        </div>
+        <div style={{ fontSize: 28, fontWeight: 900, color: COLORS.blueGreen, lineHeight: 1 }}>
+          {mult} Booster
+        </div>
+        <div style={{ fontSize: 12, color: COLORS.deepSpace, opacity: 0.6, marginTop: 4 }}>
+          Time remaining
+        </div>
+        <div
+          style={{
+            fontSize: 44,
+            fontWeight: 900,
+            color: COLORS.deepSpace,
+            fontVariantNumeric: 'tabular-nums',
+            letterSpacing: 1,
+            lineHeight: 1,
+          }}
+        >
+          {formatCountdown(remaining)}
+        </div>
+        <button
+          onClick={onClose}
+          style={{
+            marginTop: 8,
+            background: `linear-gradient(135deg, ${COLORS.blueGreen}, ${COLORS.deepSpace})`,
+            color: 'white',
+            border: 'none',
+            borderRadius: 12,
+            padding: '12px 32px',
+            fontSize: 15,
+            fontWeight: 800,
+            cursor: 'pointer',
+            boxShadow: `0 6px 18px ${COLORS.blueGreen}55`,
+          }}
+        >
+          OK
+        </button>
+      </div>
     </div>
   );
 }

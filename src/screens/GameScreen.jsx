@@ -9,6 +9,7 @@ import {
 import { useParticles, ParticleCanvas, RowFlash } from '../effects/ParticleSystem';
 import { sendGameEvent } from '../api';
 import { submitWithRetry } from '../pendingRequests';
+import { multiplierLabel } from '../boosters';
 
 function roundRect(ctx, x, y, w, h, r) {
   ctx.beginPath();
@@ -36,7 +37,10 @@ function drawCell(ctx, x, y, cell, color, alpha = 1) {
   ctx.restore();
 }
 
-export default function GameScreen({ onExit, onPlayAgain, onGameEnded, audio, gamePlayId, address }) {
+export default function GameScreen({ onExit, onPlayAgain, onGameEnded, audio, gamePlayId, address, boostMultiplier = 100 }) {
+  // Multiplier is in centi-units from the backend (100 = no boost, 150 = 1.5x).
+  const boostFactor = (boostMultiplier || 100) / 100;
+  const hasBoost = boostFactor > 1;
   const canvasRef = useRef(null);
   const areaRef   = useRef(null);   // canvas container — measured for sizing
   const cellRef   = useRef(28);     // current cell size, used by all game functions
@@ -183,7 +187,7 @@ export default function GameScreen({ onExit, onPlayAgain, onGameEnded, audio, ga
     const newLevel          = levelAdvance ? state.level + 1 : state.level;
     const newLinesReset     = levelAdvance ? newLinesInLevel - cfg.lines : newLinesInLevel;
     const scored            = linesCleared > 0
-      ? Math.round((BASE_SCORE[linesCleared] ?? 0) * getMultiplier()) : 0;
+      ? Math.round((BASE_SCORE[linesCleared] ?? 0) * getMultiplier() * boostFactor) : 0;
 
     const nextPiece = randomTetromino();
 
@@ -251,7 +255,7 @@ export default function GameScreen({ onExit, onPlayAgain, onGameEnded, audio, ga
     const C    = cellRef.current;
     const drop = getDropPosition(state.board, state.piece);
 
-    state.score += drop * HARD_DROP_SCORE * (state.level + 1);
+    state.score += Math.round(drop * HARD_DROP_SCORE * (state.level + 1) * boostFactor);
     const landX  = (state.piece.x + Math.floor(state.piece.shape[0].length / 2)) * C + C / 2;
     const landY  = (state.piece.y + drop + state.piece.shape.length) * C;
     spawnHardDrop(landX, landY);
@@ -534,7 +538,32 @@ export default function GameScreen({ onExit, onPlayAgain, onGameEnded, audio, ga
       </div>
 
       {/* Canvas area — fills remaining space, ResizeObserver watches this */}
-      <div ref={areaRef} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: '8px' }}>
+      <div ref={areaRef} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: '8px', position: 'relative' }}>
+        {hasBoost && (
+          <div
+            style={{
+              position: 'absolute',
+              top: 10,
+              right: 14,
+              zIndex: 5,
+              background: `linear-gradient(135deg, ${COLORS.blueGreen}, ${COLORS.deepSpace})`,
+              color: 'white',
+              borderRadius: 999,
+              padding: '5px 11px',
+              fontSize: 11,
+              fontWeight: 900,
+              letterSpacing: 0.4,
+              boxShadow: `0 4px 14px ${COLORS.blueGreen}55`,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 5,
+              animation: 'boostBadgePulse 2.4s ease-in-out infinite',
+            }}
+          >
+            <span style={{ fontSize: 12 }}>🚀</span>
+            <span>{multiplierLabel(boostMultiplier)} boosted</span>
+          </div>
+        )}
         <div
           style={{
             position: 'relative', width: boardW, height: boardH,
@@ -596,6 +625,13 @@ export default function GameScreen({ onExit, onPlayAgain, onGameEnded, audio, ga
           <div style={{ height: '100%', width: `${progressPct}%`, background: `linear-gradient(90deg, ${COLORS.blueGreen}, ${COLORS.orange})`, borderRadius: 3, transition: 'width 0.3s ease' }} />
         </div>
       </div>
+
+      <style>{`
+        @keyframes boostBadgePulse {
+          0%, 100% { transform: scale(1); box-shadow: 0 4px 14px ${COLORS.blueGreen}55; }
+          50%      { transform: scale(1.06); box-shadow: 0 6px 22px ${COLORS.blueGreen}88; }
+        }
+      `}</style>
     </div>
   );
 }

@@ -9,28 +9,15 @@ import erc20Abi from '../abis/erc20.abi.js';
 import { useClaim } from '../hooks/useClaim';
 import { TxOverlay, Toast } from '../components/TxOverlay';
 import SignUpModal from '../components/SignUpModal';
+import {
+  BOOST_INFO_BY_ITEM_TYPE,
+  BOOSTER_ITEM_TYPES,
+  formatBoosterName,
+  formatDuration,
+  multiplierLabel,
+} from '../boosters';
 
 const MYSTERY_BOX_ITEM_TYPE = 101;
-
-// Multiplier is in centi-units (125 = 1.25x). Duration in minutes.
-const BOOST_INFO_BY_ITEM_TYPE = {
-  201: { multiplier: 125, durationMinutes: 60 },
-  202: { multiplier: 125, durationMinutes: 180 },
-  203: { multiplier: 125, durationMinutes: 360 },
-  204: { multiplier: 150, durationMinutes: 60 },
-  205: { multiplier: 150, durationMinutes: 180 },
-};
-
-function formatBoosterName(itemType) {
-  const info = BOOST_INFO_BY_ITEM_TYPE[itemType];
-  if (!info) return null;
-  const multiplier = (info.multiplier / 100).toString();
-  const hours = info.durationMinutes / 60;
-  const durationLabel = `${hours} Hour${hours === 1 ? '' : 's'}`;
-  return `${multiplier}X Score Booster (${durationLabel})`;
-}
-
-const BOOSTER_ITEM_TYPES = new Set(Object.keys(BOOST_INFO_BY_ITEM_TYPE).map(Number));
 
 function getItemTypeInfo(itemType) {
   if (itemType === MYSTERY_BOX_ITEM_TYPE) {
@@ -58,6 +45,10 @@ export default function ProfileScreen({ audio, onToggleMute, onGoHome, address, 
   const [openingBoxId, setOpeningBoxId] = useState(null);
   const [openResult, setOpenResult] = useState(null);
   const [openError, setOpenError] = useState(null);
+  const [activatingId, setActivatingId] = useState(null);
+  const [activationResult, setActivationResult] = useState(null);
+  const [activationError, setActivationError] = useState(null);
+  const [showActiveWarning, setShowActiveWarning] = useState(false);
   const publicClient = usePublicClient();
   const { claim, txStatus, claimingId, resetTxStatus } = useClaim();
 
@@ -129,6 +120,38 @@ export default function ProfileScreen({ audio, onToggleMute, onGoHome, address, 
     setOpeningBoxId(null);
     setOpenResult(null);
     setOpenError(null);
+    fetchProfile();
+  }, [fetchProfile]);
+
+  const handleActivateBooster = useCallback(async (itemId) => {
+    if (activatingId) return;
+    if (profile?.active_booster) {
+      setShowActiveWarning(true);
+      return;
+    }
+    const authedApi = getAuthedApi(address);
+    if (!authedApi) return;
+    setActivationError(null);
+    setActivatingId(itemId);
+    try {
+      const res = await authedApi.booster.activate.$post({ json: { item_id: itemId } });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setActivationError(data?.error || 'Failed to activate. Try again.');
+        return;
+      }
+      const data = await res.json();
+      setActivationResult(data);
+    } catch {
+      setActivationError('Failed to activate. Try again.');
+    } finally {
+      setActivatingId(null);
+    }
+  }, [address, activatingId, profile]);
+
+  const handleCloseActivation = useCallback(() => {
+    setActivationResult(null);
+    setActivationError(null);
     fetchProfile();
   }, [fetchProfile]);
 
@@ -312,7 +335,9 @@ export default function ProfileScreen({ audio, onToggleMute, onGoHome, address, 
                     item={item}
                     onOpen={item.item_type === MYSTERY_BOX_ITEM_TYPE ? () => handleOpenBox(item.item_id) : null}
                     isOpening={openingBoxId === item.item_id}
-                    disabled={openingBoxId != null && openingBoxId !== item.item_id}
+                    onActivate={BOOSTER_ITEM_TYPES.has(item.item_type) ? () => handleActivateBooster(item.item_id) : null}
+                    isActivating={activatingId === item.item_id}
+                    disabled={(openingBoxId != null && openingBoxId !== item.item_id) || (activatingId != null && activatingId !== item.item_id)}
                   />
                 ))}
               </div>
@@ -329,6 +354,20 @@ export default function ProfileScreen({ audio, onToggleMute, onGoHome, address, 
           result={openResult}
           error={openError}
           onClose={handleCloseOpenOverlay}
+        />
+      )}
+      {(activatingId || activationResult || activationError) && (
+        <BoosterActivationOverlay
+          loading={!!activatingId && !activationResult && !activationError}
+          result={activationResult}
+          error={activationError}
+          onClose={handleCloseActivation}
+        />
+      )}
+      {showActiveWarning && (
+        <ActiveBoosterWarning
+          activeBooster={profile?.active_booster}
+          onClose={() => setShowActiveWarning(false)}
         />
       )}
       {showRejectedToast && (
@@ -442,7 +481,7 @@ function StatBlock({ label, value, color, icon }) {
   );
 }
 
-function InventoryCard({ item, onOpen, isOpening, disabled }) {
+function InventoryCard({ item, onOpen, isOpening, onActivate, isActivating, disabled }) {
   const info = getItemTypeInfo(item.item_type);
   return (
     <div
@@ -489,6 +528,240 @@ function InventoryCard({ item, onOpen, isOpening, disabled }) {
           {isOpening ? 'Opening…' : 'Open'}
         </button>
       )}
+      {onActivate && (
+        <button
+          onClick={onActivate}
+          disabled={disabled || isActivating}
+          style={{
+            background:
+              disabled || isActivating
+                ? '#cbd5e1'
+                : `linear-gradient(135deg, ${COLORS.blueGreen}, ${COLORS.deepSpace})`,
+            color: 'white',
+            border: 'none',
+            borderRadius: 10,
+            padding: '10px 18px',
+            fontSize: 14,
+            fontWeight: 800,
+            cursor: disabled || isActivating ? 'not-allowed' : 'pointer',
+            boxShadow: `0 4px 12px ${COLORS.blueGreen}44`,
+          }}
+        >
+          {isActivating ? 'Activating…' : 'Activate'}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function BoosterActivationOverlay({ loading, result, error, onClose }) {
+  const multiplier = result?.multiplier;
+  const startedAt = result?.started_at;
+  const expiresAt = result?.expires_at;
+  const durationMinutes = startedAt && expiresAt
+    ? Math.max(1, Math.round((new Date(expiresAt).getTime() - new Date(startedAt).getTime()) / 60000))
+    : null;
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 950,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'rgba(2,48,71,0.65)',
+        backdropFilter: 'blur(6px)',
+        animation: 'mboxFade 0.2s ease',
+      }}
+    >
+      <div
+        style={{
+          background: 'white',
+          borderRadius: 24,
+          padding: '36px 28px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 18,
+          minWidth: 300,
+          maxWidth: 360,
+          boxShadow: '0 24px 64px rgba(2,48,71,0.3)',
+          textAlign: 'center',
+        }}
+      >
+        {error ? (
+          <>
+            <div style={{ fontSize: 48 }}>⚠️</div>
+            <div style={{ fontSize: 15, fontWeight: 800, color: COLORS.deepSpace }}>{error}</div>
+            <button
+              onClick={onClose}
+              style={{
+                background: `linear-gradient(135deg, ${COLORS.blueGreen}, ${COLORS.deepSpace})`,
+                color: 'white',
+                border: 'none',
+                borderRadius: 12,
+                padding: '12px 28px',
+                fontSize: 15,
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              OK
+            </button>
+          </>
+        ) : loading || !result ? (
+          <>
+            <div
+              style={{
+                position: 'relative',
+                width: 120,
+                height: 120,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 72,
+                animation: 'boosterMagic 0.9s ease forwards',
+                filter: `drop-shadow(0 0 16px ${COLORS.skyBlue})`,
+              }}
+            >
+              ✨
+            </div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: COLORS.deepSpace }}>
+              Activating booster…
+            </div>
+          </>
+        ) : (
+          <>
+            <div style={{ position: 'relative', width: 140, height: 140 }}>
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  borderRadius: '50%',
+                  background: `radial-gradient(circle, ${COLORS.skyBlue}aa 0%, ${COLORS.blueGreen}55 45%, transparent 70%)`,
+                  animation: 'energyBurst 0.6s ease forwards',
+                }}
+              />
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 84,
+                  animation: 'boosterMagic 0.9s ease forwards',
+                  filter: `drop-shadow(0 0 16px ${COLORS.skyBlue})`,
+                }}
+              >
+                🚀
+              </div>
+              {[
+                { top: '8%', left: '12%' },
+                { top: '18%', right: '10%' },
+                { bottom: '14%', left: '8%' },
+                { bottom: '8%', right: '14%' },
+                { top: '50%', left: '0%' },
+                { top: '45%', right: '0%' },
+              ].map((p, i) => (
+                <div
+                  key={i}
+                  style={{
+                    position: 'absolute',
+                    ...p,
+                    fontSize: 16,
+                    animation: `sparkle 1.2s ease ${i * 0.12}s infinite`,
+                  }}
+                >
+                  ✨
+                </div>
+              ))}
+            </div>
+            <div style={{ fontSize: 22, fontWeight: 900, color: COLORS.blueGreen }}>
+              {multiplier ? multiplierLabel(multiplier) : ''} Booster Activated!
+            </div>
+            <div style={{ fontSize: 14, color: COLORS.deepSpace, opacity: 0.75, lineHeight: 1.4 }}>
+              {multiplier ? multiplierLabel(multiplier) : ''} booster is enabled
+              {durationMinutes ? ` for ${formatDuration(durationMinutes)}` : ''}.
+            </div>
+            <button
+              onClick={onClose}
+              style={{
+                background: `linear-gradient(135deg, ${COLORS.blueGreen}, ${COLORS.deepSpace})`,
+                color: 'white',
+                border: 'none',
+                borderRadius: 12,
+                padding: '12px 32px',
+                fontSize: 15,
+                fontWeight: 800,
+                cursor: 'pointer',
+                boxShadow: `0 6px 18px ${COLORS.blueGreen}55`,
+              }}
+            >
+              Awesome!
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ActiveBoosterWarning({ activeBooster, onClose }) {
+  const mult = activeBooster?.multiplier;
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 960,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'rgba(2,48,71,0.65)',
+        backdropFilter: 'blur(6px)',
+      }}
+    >
+      <div
+        style={{
+          background: 'white',
+          borderRadius: 24,
+          padding: '32px 28px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 14,
+          minWidth: 280,
+          maxWidth: 340,
+          boxShadow: '0 24px 64px rgba(2,48,71,0.3)',
+          textAlign: 'center',
+        }}
+      >
+        <div style={{ fontSize: 44 }}>⚠️</div>
+        <div style={{ fontSize: 17, fontWeight: 800, color: COLORS.deepSpace }}>
+          You already have an active booster
+        </div>
+        <div style={{ fontSize: 14, color: COLORS.deepSpace, opacity: 0.65, lineHeight: 1.4 }}>
+          Wait for your {mult ? multiplierLabel(mult) : 'current'} booster to expire before activating another.
+        </div>
+        <button
+          onClick={onClose}
+          style={{
+            marginTop: 4,
+            background: `linear-gradient(135deg, ${COLORS.blueGreen}, ${COLORS.deepSpace})`,
+            color: 'white',
+            border: 'none',
+            borderRadius: 12,
+            padding: '12px 32px',
+            fontSize: 15,
+            fontWeight: 800,
+            cursor: 'pointer',
+          }}
+        >
+          OK
+        </button>
+      </div>
     </div>
   );
 }

@@ -21,6 +21,7 @@ import { BannedOverlay } from './components/BannedOverlay';
 export default function App() {
   const [screen, setScreen] = useState('home');
   const [gamePlayId, setGamePlayId] = useState(null);
+  const [gameBoostMultiplier, setGameBoostMultiplier] = useState(100);
   const [showRejectedToast, setShowRejectedToast] = useState(false);
   const [showNoEnergyModal, setShowNoEnergyModal] = useState(false);
   const audio = useAudio();
@@ -96,12 +97,23 @@ export default function App() {
     scheduleRefreshUser();
   }, [scheduleRefreshUser]);
 
+  const captureBoostMultiplier = useCallback((u) => {
+    const booster = u?.active_booster;
+    if (!booster) {
+      setGameBoostMultiplier(100);
+      return;
+    }
+    const expiresMs = new Date(booster.expires_at).getTime();
+    setGameBoostMultiplier(expiresMs > Date.now() ? booster.multiplier : 100);
+  }, []);
+
   const handlePlay = useCallback(async () => {
     audio.initAudio();
 
     if (energy > 0) {
       const playId = await callGameStart();
       if (playId) {
+        captureBoostMultiplier(user);
         setGamePlayId(playId);
         setScreen('game');
       }
@@ -116,12 +128,13 @@ export default function App() {
       if (updatedUser?.stats?.energy > 0) {
         const playId = await callGameStart();
         if (playId) {
+          captureBoostMultiplier(updatedUser);
           setGamePlayId(playId);
           setScreen('game');
         }
       }
     }
-  }, [energy, audio, startPlay, callGameStart, refreshUser]);
+  }, [energy, audio, startPlay, callGameStart, refreshUser, user, captureBoostMultiplier]);
 
   const handlePlayAgain = useCallback(async () => {
     const updatedUser = await refreshUser();
@@ -132,11 +145,12 @@ export default function App() {
     }
     const playId = await callGameStart();
     if (playId) {
+      captureBoostMultiplier(updatedUser);
       setGamePlayId(playId);
       return playId;
     }
     return null;
-  }, [callGameStart, refreshUser]);
+  }, [callGameStart, refreshUser, captureBoostMultiplier]);
 
   const handleExitGame = useCallback(() => {
     setScreen('home');
@@ -210,7 +224,7 @@ export default function App() {
           />
         )}
         {screen === 'game' && (
-          <GameScreen onExit={handleExitGame} onPlayAgain={handlePlayAgain} onGameEnded={handleGameEnded} audio={audio} gamePlayId={gamePlayId} address={address} />
+          <GameScreen onExit={handleExitGame} onPlayAgain={handlePlayAgain} onGameEnded={handleGameEnded} audio={audio} gamePlayId={gamePlayId} address={address} boostMultiplier={gameBoostMultiplier} />
         )}
         {screen === 'leaderboard' && (
           <LeaderboardScreen onGoHome={handleGoHome} address={address} user={user} />
