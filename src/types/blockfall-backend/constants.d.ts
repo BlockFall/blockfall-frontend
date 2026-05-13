@@ -29,4 +29,33 @@ export declare const PAYMENT_TOKENS: {
 };
 export declare const DAILY_PAYOUT_TOKEN_ID: 1;
 export declare const MIN_PAYOUT_THRESHOLD_USDT = "2";
+export declare const MYSTERY_BOX_PRIZES: {
+    5: {
+        countInBatch: number;
+    };
+    2: {
+        countInBatch: number;
+    };
+    3: {
+        countInBatch: number;
+    };
+    4: {
+        countInBatch: number;
+    };
+    201: {
+        countInBatch: number;
+    };
+    202: {
+        countInBatch: number;
+    };
+    203: {
+        countInBatch: number;
+    };
+    204: {
+        countInBatch: number;
+    };
+    205: {
+        countInBatch: number;
+    };
+};
 //# sourceMappingURL=constants.d.ts.map
