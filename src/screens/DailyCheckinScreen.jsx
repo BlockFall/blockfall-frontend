@@ -264,6 +264,8 @@ export default function DailyCheckinScreen({ onGoHome, onAddEnergy }) {
                         strokeLinejoin="round"
                       />
                     </svg>
+                  ) : i === CYCLE_LENGTH - 1 ? (
+                    <span style={{ fontSize: 18, lineHeight: 1 }}>🎁</span>
                   ) : isPast ? (
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
                       <path
