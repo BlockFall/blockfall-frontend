@@ -56,6 +56,7 @@ export default function DailyCheckinScreen({ onGoHome, onAddEnergy }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [rewardMsg, setRewardMsg] = useState(null);
+  const [mysteryBoxReward, setMysteryBoxReward] = useState(null);
 
   const fetchCheckins = useCallback(async () => {
     const authedApi = getAuthedApi(address);
@@ -110,7 +111,7 @@ export default function DailyCheckinScreen({ onGoHome, onAddEnergy }) {
       }
       const data = await res.json();
       if (data.mystery_box_item_id) {
-        setRewardMsg(`🎁 Mystery box unlocked! (+${data.energy_granted} ⚡)`);
+        setMysteryBoxReward({ energy: data.energy_granted });
       } else {
         setRewardMsg(`+${data.energy_granted} ⚡ granted!`);
       }
@@ -381,6 +382,206 @@ export default function DailyCheckinScreen({ onGoHome, onAddEnergy }) {
           )}
         </button>
       </div>
+
+      {mysteryBoxReward && (
+        <MysteryBoxModal
+          energy={mysteryBoxReward.energy}
+          onClose={() => setMysteryBoxReward(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+function MysteryBoxModal({ energy, onClose }) {
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 1000,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'rgba(2,48,71,0.65)',
+        backdropFilter: 'blur(6px)',
+        animation: 'mbFadeIn 0.25s ease',
+        padding: 20,
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: 'white',
+          borderRadius: 24,
+          padding: '32px 28px 24px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 18,
+          maxWidth: 360,
+          width: '100%',
+          boxShadow: '0 24px 64px rgba(2,48,71,0.3)',
+          animation: 'mbPopIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
+        {/* Confetti / sparkles background */}
+        <div
+          aria-hidden
+          style={{
+            position: 'absolute',
+            inset: 0,
+            pointerEvents: 'none',
+            overflow: 'hidden',
+          }}
+        >
+          {Array.from({ length: 14 }).map((_, i) => {
+            const colors = [COLORS.orange, COLORS.amber, COLORS.blueGreen, COLORS.brightMarine, COLORS.skyBlue];
+            const color = colors[i % colors.length];
+            const left = (i * 73) % 100;
+            const delay = (i % 7) * 0.15;
+            const duration = 1.6 + (i % 4) * 0.4;
+            return (
+              <span
+                key={i}
+                style={{
+                  position: 'absolute',
+                  top: -10,
+                  left: `${left}%`,
+                  width: 8,
+                  height: 8,
+                  borderRadius: i % 2 ? '50%' : 2,
+                  background: color,
+                  opacity: 0.85,
+                  animation: `mbConfetti ${duration}s ${delay}s ease-in infinite`,
+                }}
+              />
+            );
+          })}
+        </div>
+
+        {/* Mystery box icon with animation */}
+        <div
+          style={{
+            position: 'relative',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 140,
+            height: 140,
+            zIndex: 1,
+          }}
+        >
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              borderRadius: '50%',
+              background: `radial-gradient(circle, ${COLORS.amber}66, transparent 70%)`,
+              animation: 'mbGlow 1.8s ease-in-out infinite',
+            }}
+          />
+          <div
+            style={{
+              fontSize: 96,
+              animation: 'mbWiggle 1.2s ease-in-out infinite',
+              filter: `drop-shadow(0 6px 16px ${COLORS.orange}66)`,
+              zIndex: 1,
+            }}
+          >
+            🎁
+          </div>
+        </div>
+
+        <div
+          style={{
+            fontSize: 22,
+            fontWeight: 900,
+            color: COLORS.deepSpace,
+            textAlign: 'center',
+            zIndex: 1,
+          }}
+        >
+          Mystery Box Unlocked!
+        </div>
+
+        <div
+          style={{
+            fontSize: 14,
+            color: COLORS.deepSpace,
+            opacity: 0.7,
+            textAlign: 'center',
+            lineHeight: 1.5,
+            zIndex: 1,
+          }}
+        >
+          You completed a 7-day streak! Open your mystery box on the{' '}
+          <strong style={{ color: COLORS.orange }}>Profile page</strong> to reveal your reward.
+        </div>
+
+        <div
+          style={{
+            background: `${COLORS.amber}22`,
+            border: `1.5px solid ${COLORS.amber}66`,
+            borderRadius: 12,
+            padding: '8px 14px',
+            fontSize: 13,
+            fontWeight: 700,
+            color: COLORS.deepSpace,
+            zIndex: 1,
+          }}
+        >
+          +{energy} ⚡ also granted
+        </div>
+
+        <button
+          onClick={onClose}
+          style={{
+            marginTop: 4,
+            background: `linear-gradient(135deg, ${COLORS.orange}, ${COLORS.amber})`,
+            color: 'white',
+            border: 'none',
+            borderRadius: 14,
+            padding: '12px 28px',
+            fontSize: 15,
+            fontWeight: 800,
+            cursor: 'pointer',
+            letterSpacing: 0.5,
+            boxShadow: `0 6px 20px ${COLORS.orange}55`,
+            zIndex: 1,
+          }}
+        >
+          Awesome!
+        </button>
+      </div>
+
+      <style>{`
+        @keyframes mbFadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes mbPopIn {
+          0% { opacity: 0; transform: scale(0.6); }
+          100% { opacity: 1; transform: scale(1); }
+        }
+        @keyframes mbWiggle {
+          0%, 100% { transform: rotate(-8deg) scale(1); }
+          25% { transform: rotate(8deg) scale(1.06); }
+          50% { transform: rotate(-6deg) scale(1.02); }
+          75% { transform: rotate(6deg) scale(1.06); }
+        }
+        @keyframes mbGlow {
+          0%, 100% { transform: scale(0.9); opacity: 0.6; }
+          50% { transform: scale(1.15); opacity: 1; }
+        }
+        @keyframes mbConfetti {
+          0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+          100% { transform: translateY(420px) rotate(540deg); opacity: 0; }
+        }
+      `}</style>
     </div>
   );
 }
