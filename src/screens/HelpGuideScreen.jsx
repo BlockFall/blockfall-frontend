@@ -47,8 +47,8 @@ const SECTIONS = [
     title: 'Daily Rewards',
     color: COLORS.brightMarine,
     content:
-      "Every day, the top 50 players on the leaderboard share a portion of the protocol's revenue. Rankings reset every day at midnight UTC (00:00) — so every day is a fresh shot at the top. You can claim your rewards on the profile page. The more you play, the more points you earn, and the bigger your share of the prize pool.",
-    highlight: 'Top 50 players · Daily revenue share · Resets every day at 00:00 UTC',
+      "Every day, the top 25 players on the leaderboard share a portion of the protocol's revenue. Rankings reset every day at midnight UTC (00:00) — so every day is a fresh shot at the top. You can claim your rewards on the profile page. The more you play, the more points you earn, and the bigger your share of the prize pool.",
+    highlight: 'Top 25 players · Daily revenue share · Resets every day at 00:00 UTC',
   },
 ];
 
