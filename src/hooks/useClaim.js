@@ -4,6 +4,7 @@ import { UserRejectedRequestError } from 'viem';
 import blockFallAbi from '../abis/BlockFallGame.abi.js';
 import { BLOCKFALL_GAME_ADDRESS, PAYMENT_TOKENS } from '../constants.js';
 import { getAuthedApi } from '../api.js';
+import { ATTRIBUTION_SUFFIX } from '../attribution.js';
 
 export function useClaim() {
   const { address } = useAccount();
@@ -32,6 +33,7 @@ export function useClaim() {
           BigInt(pendingClaim.amount),
           pendingClaim.signature,
         ],
+        dataSuffix: ATTRIBUTION_SUFFIX,
       });
       setTxStatus('confirming');
       const receipt = await publicClient.waitForTransactionReceipt({

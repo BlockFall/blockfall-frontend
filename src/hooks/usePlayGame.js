@@ -11,6 +11,7 @@ import {
   PAYMENT_TOKENS,
 } from '../constants.js';
 import { submitWithRetry } from '../pendingRequests.js';
+import { ATTRIBUTION_SUFFIX } from '../attribution.js';
 
 // txStatus: null | 'awaiting_wallet' | 'confirming' | 'rejected' | 'error' | 'success'
 
@@ -96,6 +97,7 @@ export function usePlayGame() {
           abi: erc20Abi,
           functionName: 'approve',
           args: [BLOCKFALL_GAME_ADDRESS, approvalAmount],
+          dataSuffix: ATTRIBUTION_SUFFIX,
         });
         setTxStatus('confirming');
         const approveReceipt = await publicClient.waitForTransactionReceipt({
@@ -114,6 +116,7 @@ export function usePlayGame() {
         abi: blockFallAbi,
         functionName: 'buy',
         args: [BigInt(itemTypeId), selectedToken],
+        dataSuffix: ATTRIBUTION_SUFFIX,
       });
       setTxStatus('confirming');
       const buyReceipt = await publicClient.waitForTransactionReceipt({
